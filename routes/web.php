@@ -3,7 +3,10 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\User\Product;
+use App\Http\Controllers\User\RentalController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -11,9 +14,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -26,6 +29,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
+});
+
+// User Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/products', [Product::class, 'index'])->name('products.index');
+    Route::get('/products/{unit}', [Product::class, 'show'])->name('products.show');
+    
+    // Rental routes
+    Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
+    Route::get('/rentals/create', [RentalController::class, 'create'])->name('rentals.create');
+    Route::post('/rentals', [RentalController::class, 'store'])->name('rentals.store');
+    Route::get('/rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
+    Route::patch('/rentals/{rental}/cancel', [RentalController::class, 'cancel'])->name('rentals.cancel');
+    Route::post('/rentals/{rental}/extend', [RentalController::class, 'extend'])->name('rentals.extend');
+    Route::post('/rentals/{rental}/early-return', [RentalController::class, 'earlyReturn'])->name('rentals.early-return'); // New route
+    Route::post('/rentals/{rental}/return', [RentalController::class, 'return'])->name('rentals.return');
 });
 
 require __DIR__ . '/auth.php';

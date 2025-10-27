@@ -30,10 +30,18 @@ class Unit extends Model
     }
 
     /**
-     * Rentals associated with the unit.
+     * Get the rentals for the unit.
      */
-    public function rentals(): HasMany
+    public function rentals()
     {
         return $this->hasMany(Rental::class);
+    }
+
+    /**
+     * Get current active rental
+     */
+    public function currentRental()
+    {
+        return $this->hasOne(Rental::class)->where('status', 'active');
     }
 }
