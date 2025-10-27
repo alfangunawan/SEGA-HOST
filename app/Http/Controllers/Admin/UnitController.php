@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class UnitController extends Controller
@@ -50,6 +49,8 @@ class UnitController extends Controller
         $categories = $validated['categories'] ?? [];
         unset($validated['categories']);
 
+        $validated['penalty'] = $validated['penalty'] ?? 5000;
+
         $unit = Unit::create($validated);
         $unit->categories()->sync($categories);
 
@@ -63,7 +64,7 @@ class UnitController extends Controller
     public function edit(Unit $unit): View
     {
         $categories = Category::orderBy('name')->pluck('name', 'id');
-        $selectedCategories = $unit->categories()->pluck('id')->toArray();
+        $selectedCategories = $unit->categories()->pluck('categories.id')->toArray();
 
         return view('admin.units.edit', compact('unit', 'categories', 'selectedCategories'));
     }
@@ -76,6 +77,8 @@ class UnitController extends Controller
         $validated = $this->validatedData($request, $unit->id);
         $categories = $validated['categories'] ?? [];
         unset($validated['categories']);
+
+        $validated['penalty'] = $validated['penalty'] ?? 5000;
 
         $unit->update($validated);
         $unit->categories()->sync($categories);
@@ -100,22 +103,17 @@ class UnitController extends Controller
      */
     protected function validatedData(Request $request, ?int $unitId = null): array
     {
-        $codeRule = Rule::unique('units', 'code');
-
-        if ($unitId) {
-            $codeRule->ignore($unitId);
-        }
-
         return $request->validate([
-            'code' => ['required', 'string', 'max:255', $codeRule],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:available,rented,maintenance'],
             'price_per_day' => ['required', 'numeric', 'min:0'],
+            'penalty' => ['nullable', 'integer', 'min:0'],
             'ip_address' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
             'categories' => ['nullable', 'array'],
             'categories.*' => ['integer', 'exists:categories,id'],
         ]);
     }
+
 }

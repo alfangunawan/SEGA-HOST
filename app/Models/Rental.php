@@ -29,6 +29,12 @@ class Rental extends Model
         'penalty_cost' => 'decimal:2',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'total_cost' => 'decimal:2',
+    ];
+
     /**
      * Get the user that owns the rental.
      */

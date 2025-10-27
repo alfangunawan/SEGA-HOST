@@ -12,7 +12,6 @@ return new class extends Migration {
     {
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
             $table->string('name');
             $table->text('description')->nullable();
             $table->enum('status', ['available', 'rented', 'maintenance'])->default('available');

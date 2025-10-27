@@ -4,6 +4,9 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RentalController;
+use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\Product;
 use App\Http\Controllers\User\RentalController;
@@ -29,6 +32,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
+    Route::resource('rentals', RentalController::class)->except(['show']);
+    Route::resource('users', UserController::class)->except(['show']);
+    Route::get('rekap', [RekapController::class, 'index'])->name('rekap.index');
 });
 
 // User Routes
