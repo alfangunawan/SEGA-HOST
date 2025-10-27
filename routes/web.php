@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\ProfileController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +24,8 @@ Route::middleware('auth')->group(function () {
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::resource('units', UnitController::class)->except(['show']);
 });
 
 require __DIR__ . '/auth.php';

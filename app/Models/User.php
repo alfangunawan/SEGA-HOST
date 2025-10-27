@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,7 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'profile_photo', 
+        'profile_photo',
     ];
 
     /**
@@ -48,11 +49,19 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Rentals made by the user.
+     */
+    public function rentals(): HasMany
+    {
+        return $this->hasMany(Rental::class);
+    }
+
     // Tambahkan method accessor ini
     public function getProfilePhotoUrlAttribute(): ?string
     {
         return $this->profile_photo
-            ? asset('storage/'.$this->profile_photo)
+            ? asset('storage/' . $this->profile_photo)
             : null;
     }
 }
