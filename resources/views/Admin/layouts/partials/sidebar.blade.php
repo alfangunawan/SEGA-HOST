@@ -24,13 +24,29 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
         </a>
-        <div class="flex items-center justify-between rounded-md px-3 py-2 text-gray-400 bg-gray-50 cursor-not-allowed">
-            <span>{{ __('Manajemen Pengguna') }}</span>
-            <span class="text-xs bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">{{ __('Segera') }}</span>
-        </div>
-        <div class="flex items-center justify-between rounded-md px-3 py-2 text-gray-400 bg-gray-50 cursor-not-allowed">
-            <span>{{ __('Laporan') }}</span>
-            <span class="text-xs bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">{{ __('Segera') }}</span>
-        </div>
+        <a href="{{ route('admin.rentals.index') }}"
+            class="flex items-center justify-between rounded-md px-3 py-2 transition {{ request()->routeIs('admin.rentals.*') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'hover:bg-gray-100 text-gray-600' }}">
+            <span>{{ __('Peminjaman') }}</span>
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
+        <a href="{{ route('admin.rekap.index') }}"
+            class="flex items-center justify-between rounded-md px-3 py-2 transition {{ request()->routeIs('admin.rekap.*') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'hover:bg-gray-100 text-gray-600' }}">
+            <span>{{ __('Rekap') }}</span>
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
+        <a href="{{ route('admin.users.index') }}"
+            class="flex items-center justify-between rounded-md px-3 py-2 transition {{ request()->routeIs('admin.users.*') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'hover:bg-gray-100 text-gray-600' }}">
+            <span>{{ __('Pengguna') }}</span>
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
     </nav>
 </aside>

@@ -19,6 +19,12 @@ class Rental extends Model
         'total_cost',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'total_cost' => 'decimal:2',
+    ];
+
     /**
      * User who made the rental.
      */

@@ -6,26 +6,14 @@
 @endphp
 
 <div class="space-y-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-            <label for="code" class="block text-sm font-medium text-gray-700">{{ __('Kode Unit') }}</label>
-            <input type="text" name="code" id="code" value="{{ old('code', $unit->code ?? '') }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                   required>
-            @error('code')
-                <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">{{ __('Nama Unit') }}</label>
-            <input type="text" name="name" id="name" value="{{ old('name', $unit->name ?? '') }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                   required>
-            @error('name')
-                <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
-            @enderror
-        </div>
+    <div>
+        <label for="name" class="block text-sm font-medium text-gray-700">{{ __('Nama Unit') }}</label>
+        <input type="text" name="name" id="name" value="{{ old('name', $unit->name ?? '') }}"
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+               required>
+        @error('name')
+            <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
+        @enderror
     </div>
 
     <div>
@@ -62,6 +50,17 @@
                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                    required>
             @error('price_per_day')
+                <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="penalty" class="block text-sm font-medium text-gray-700">{{ __('Denda per Hari') }}</label>
+            <input type="number" step="1" min="0" name="penalty" id="penalty"
+                   value="{{ old('penalty', $unit->penalty ?? 5000) }}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <p class="mt-1 text-xs text-gray-500">{{ __('Nilai default 5.000. Sesuaikan sesuai kebutuhan.') }}</p>
+            @error('penalty')
                 <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
             @enderror
         </div>

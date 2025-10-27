@@ -12,13 +12,18 @@ class Unit extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code',
         'name',
         'description',
         'status',
         'price_per_day',
+        'penalty',
         'ip_address',
         'location',
+    ];
+
+    protected $casts = [
+        'price_per_day' => 'decimal:2',
+        'penalty' => 'integer',
     ];
 
     /**
