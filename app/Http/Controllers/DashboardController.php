@@ -36,9 +36,9 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
         
-        // Additional stats for better insight
+        // Additional stats for better insight - group returned_early with completed
         $completedOrders = $user->rentals()
-            ->whereIn('status', ['completed', 'returned_early'])
+            ->whereIn('status', ['completed', 'returned_early']) // Gabungkan
             ->count();
             
         $pendingOrders = $user->rentals()
