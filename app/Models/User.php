@@ -47,7 +47,7 @@ class User extends Authenticatable
      */
     public function activeRentalsCount(): int
     {
-        return $this->rentals()->whereIn('status', ['pending', 'active'])->count();
+        return $this->rentals()->whereIn('status', ['pending', 'active', 'overdue'])->count();
     }
 
     /**

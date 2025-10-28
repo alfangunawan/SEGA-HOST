@@ -6,29 +6,46 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class Rental extends Model
 {
     use HasFactory;
 
-    public const STATUS_DEFAULT = 'pending';
+    // Status constants
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_RETURNED_EARLY = 'returned_early';
+    public const STATUS_OVERDUE = 'overdue';
+    public const STATUS_CANCELLED = 'cancelled';
+    
+    // Default status
+    public const STATUS_DEFAULT = self::STATUS_PENDING;
+    
+    // Business constants
+    public const MAX_RENTAL_DAYS = 5;
+    public const REFUND_PERCENTAGE = 0.8;
+    public const PROCESSING_FEE_PERCENTAGE = 0.2;
 
+    // Status labels for display
     public const STATUS_LABELS = [
-        'pending' => 'Menunggu Konfirmasi',
-        'active' => 'Sedang Berjalan',
-        'completed' => 'Selesai',
-        'cancelled' => 'Dibatalkan',
-        'overdue' => 'Terlambat',
-        'returned_early' => 'Dikembalikan Lebih Awal',
+        self::STATUS_PENDING => 'Pending',
+        self::STATUS_ACTIVE => 'Active',
+        self::STATUS_COMPLETED => 'Completed',
+        self::STATUS_RETURNED_EARLY => 'Returned Early',
+        self::STATUS_OVERDUE => 'Overdue',
+        self::STATUS_CANCELLED => 'Cancelled',
     ];
 
+    // Status badge CSS classes
     public const STATUS_BADGE_CLASSES = [
-        'pending' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200',
-        'active' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200',
-        'completed' => 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200',
-        'cancelled' => 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
-        'overdue' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-        'returned_early' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200',
+        self::STATUS_PENDING => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-300',
+        self::STATUS_ACTIVE => 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-300',
+        self::STATUS_COMPLETED => 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-300',
+        self::STATUS_RETURNED_EARLY => 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-300',
+        self::STATUS_OVERDUE => 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-300',
+        self::STATUS_CANCELLED => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
     ];
 
     protected $fillable = [
@@ -39,14 +56,22 @@ class Rental extends Model
         'status',
         'total_cost',
         'penalty_cost',
-        'notes'
+        'notes',
+        'is_paid',
+        'payment_date',
+        'payment_method',
+        'payment_reference',
+        'final_settlement'
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'payment_date' => 'datetime',
+        'is_paid' => 'boolean',
         'total_cost' => 'decimal:2',
         'penalty_cost' => 'decimal:2',
+        'final_settlement' => 'decimal:2',
     ];
 
     /**
@@ -85,15 +110,18 @@ class Rental extends Model
     }
 
     /**
-     * Check if rental is overdue
+     * Check if rental is overdue (past end_date)
      */
     public function isOverdue(): bool
     {
-        return $this->status === 'active' && now()->gt($this->end_date);
+        $today = Carbon::today();
+        $endDate = Carbon::parse($this->end_date);
+        
+        return $today->greaterThan($endDate);
     }
 
     /**
-     * Calculate days overdue
+     * Calculate days overdue (after end_date)
      */
     public function daysOverdue(): int
     {
@@ -101,22 +129,31 @@ class Rental extends Model
             return 0;
         }
 
-        return now()->diffInDays($this->end_date);
+        $today = Carbon::today();
+        $endDate = Carbon::parse($this->end_date);
+        
+        return $endDate->diffInDays($today);
     }
 
     /**
-     * Calculate penalty for overdue rental
+     * Calculate penalty based on days after end_date
      */
     public function calculatePenalty(): float
     {
-        if (!$this->isOverdue()) {
+        if ($this->status !== self::STATUS_ACTIVE && $this->status !== self::STATUS_OVERDUE) {
             return 0;
         }
 
-        $daysOverdue = $this->daysOverdue();
-        $dailyPenalty = $this->unit->price_per_day * 0.5; // 50% of daily rate
-
-        return $daysOverdue * $dailyPenalty;
+        $today = Carbon::today();
+        $endDate = Carbon::parse($this->end_date);
+        
+        // Hitung hari terlambat setelah end_date
+        if ($today->greaterThan($endDate)) {
+            $daysLate = $endDate->diffInDays($today);
+            return $daysLate * 5000; // Rp 5.000 per hari terlambat
+        }
+        
+        return 0;
     }
 
     /**
@@ -143,5 +180,59 @@ class Rental extends Model
 
         // 80% refund for unused days
         return ($this->unit->price_per_day * $unusedDays) * 0.8;
+    }
+
+    /**
+     * Get statuses that are considered completed
+     */
+    public static function getCompletedStatuses(): array
+    {
+        return [self::STATUS_COMPLETED, self::STATUS_RETURNED_EARLY];
+    }
+
+    /**
+     * Check if rental is completed
+     */
+    public function isCompleted(): bool
+    {
+        return in_array($this->status, self::getCompletedStatuses());
+    }
+
+    /**
+     * Apply overdue penalty and update status
+     */
+    public function applyOverduePenalty(): void
+    {
+        if ($this->status !== self::STATUS_ACTIVE) {
+            return;
+        }
+
+        $penalty = $this->calculatePenalty();
+        if ($penalty > 0) {
+            $this->update([
+                'status' => self::STATUS_OVERDUE,
+                'penalty_cost' => $penalty,
+            ]);
+        }
+    }
+
+    /**
+     * Check and auto-update status to overdue if necessary
+     */
+    public function checkAndUpdateOverdueStatus(): bool
+    {
+        if ($this->status === self::STATUS_ACTIVE && $this->isOverdue()) {
+            $this->applyOverduePenalty();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Calculate total amount including penalty
+     */
+    public function getTotalAmountWithPenalty(): float
+    {
+        return $this->total_cost + ($this->penalty_cost ?? 0);
     }
 }
