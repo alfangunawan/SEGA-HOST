@@ -154,6 +154,9 @@
                                                 @case('completed')
                                                     bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
                                                     @break
+                                                @case('returned_early')
+                                                    bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200
+                                                    @break
                                                 @case('cancelled')
                                                     bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200
                                                     @break
@@ -163,7 +166,16 @@
                                                 @default
                                                     bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200
                                             @endswitch">
-                                            {{ ucfirst($rental->status) }}
+                                            @switch($rental->status)
+                                                @case('returned_early')
+                                                    Selesai Lebih Awal
+                                                    @break
+                                                @case('completed')
+                                                    Selesai
+                                                    @break
+                                                @default
+                                                    {{ ucfirst($rental->status) }}
+                                            @endswitch
                                         </span>
                                         @if($rental->isOverdue())
                                             <span class="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs font-semibold rounded-full">
@@ -225,15 +237,80 @@
                                     </div>
                                 @endif
 
+                                @if($rental->status === 'overdue')
+                                    <!-- Info Denda Keterlambatan -->
+                                    <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                                </svg>
+                                                <span class="text-sm text-red-700 dark:text-red-300">
+                                                    Denda keterlambatan ({{ $rental->daysOverdue() }} hari):
+                                                </span>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-sm font-semibold text-red-700 dark:text-red-300">
+                                                    Rp {{ number_format($rental->penalty_cost > 0 ? $rental->penalty_cost : $rental->calculatePenalty(), 0, ',', '.') }}
+                                                </div>
+                                                <div class="text-xs text-red-600 dark:text-red-400">
+                                                    (Rp 5.000/hari)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Total yang harus dibayar -->
+                                        <div class="mt-3 pt-3 border-t border-red-200 dark:border-red-700">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm font-medium text-red-700 dark:text-red-300">Total yang harus dibayar:</span>
+                                                <span class="text-lg font-bold text-red-800 dark:text-red-200">
+                                                    Rp {{ number_format($rental->total_cost + ($rental->penalty_cost > 0 ? $rental->penalty_cost : $rental->calculatePenalty()), 0, ',', '.') }}
+                                                </span>
+                                            </div>
+                                            <div class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                                (Biaya rental: Rp {{ number_format($rental->total_cost, 0, ',', '.') }} + Denda: Rp {{ number_format($rental->penalty_cost > 0 ? $rental->penalty_cost : $rental->calculatePenalty(), 0, ',', '.') }})
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif($rental->penalty_cost > 0)
+                                    <!-- Info Denda untuk status completed/returned_early yang pernah overdue -->
+                                    <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                            </svg>
+                                            <span class="text-sm text-red-700 dark:text-red-300">
+                                                Denda keterlambatan: <span class="font-semibold">Rp {{ number_format($rental->penalty_cost, 0, ',', '.') }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if($rental->penalty_cost < 0)
+                                    <!-- Info Refund untuk early return -->
+                                    <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span class="text-sm text-green-700 dark:text-green-300">
+                                                Refund pengembalian lebih awal: <span class="font-semibold">Rp {{ number_format(abs($rental->penalty_cost), 0, ',', '.') }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         Dibuat: {{ $rental->created_at->format('d M Y, H:i') }}
                                     </div>
                                     <div class="flex space-x-3">
-                                        <a href="{{ route('rentals.show', $rental) }}" 
+                                        <!-- Tombol Server Detail - untuk semua status -->
+                                        <a href="{{ route('products.show', $rental->unit) }}" 
                                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
-                                            Detail
+                                            Server Detail
                                         </a>
+                                        
                                         @if($rental->status === 'pending')
                                             <form method="POST" action="{{ route('rentals.cancel', $rental) }}" style="display: inline;">
                                                 @csrf
@@ -245,10 +322,23 @@
                                                 </button>
                                             </form>
                                         @endif
+                                        
                                         @if($rental->status === 'active')
-                                            <a href="{{ route('products.show', $rental->unit) }}" 
+                                            <!-- Tombol Kelola Server - untuk rental aktif -->
+                                            <a href="{{ route('rentals.show', $rental) }}" 
                                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
                                                 Kelola Server
+                                            </a>
+                                        @endif
+                                        
+                                        @if($rental->status === 'overdue')
+                                            <!-- Tombol Detail Penyewaan - untuk rental terlambat -->
+                                            <a href="{{ route('rentals.show', $rental) }}" 
+                                               class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                Detail Penyewaan
                                             </a>
                                         @endif
                                     </div>
@@ -300,4 +390,186 @@
             @endif
         </div>
     </div>
+
+    <!-- Early Return Modal (untuk rental aktif) -->
+    <div id="earlyReturnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Kembalikan Lebih Awal
+                    </h3>
+                    <button onclick="closeEarlyReturnModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" id="earlyReturnForm">
+                    @csrf
+                    
+                    <div class="mb-4">
+                        <label for="return_reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Alasan pengembalian lebih awal *
+                        </label>
+                        <textarea id="return_reason" name="return_reason" rows="3" required
+                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                  placeholder="Jelaskan alasan Anda..."></textarea>
+                    </div>
+
+                    <div class="mb-4 p-3 bg-orange-50 dark:bg-orange-900 rounded-lg" id="refundInfo">
+                        <!-- Refund info akan diisi via JavaScript -->
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="confirm_return" value="1" required
+                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                Saya konfirmasi untuk mengembalikan server ini lebih awal.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeEarlyReturnModal()"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                            Konfirmasi Pengembalian
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Return Modal (untuk rental terlambat) -->
+    <div id="overdueReturnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Kembalikan Server Terlambat
+                    </h3>
+                    <button onclick="closeOverdueReturnModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" id="overdueReturnForm">
+                    @csrf
+                    
+                    <div class="mb-4">
+                        <label for="overdue_return_reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Alasan pengembalian *
+                        </label>
+                        <textarea id="overdue_return_reason" name="return_reason" rows="3" required
+                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                  placeholder="Jelaskan alasan Anda..."></textarea>
+                    </div>
+
+                    <div class="mb-4 p-3 bg-red-50 dark:bg-red-900 rounded-lg" id="penaltyInfo">
+                        <!-- Penalty info akan diisi via JavaScript -->
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="confirm_penalty" value="1" required
+                                   class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                Saya memahami dan menyetujui pembayaran denda keterlambatan.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeOverdueReturnModal()"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                            Kembalikan dengan Denda
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let currentRentalId = null;
+
+    function openEarlyReturnModal(rentalId) {
+        currentRentalId = rentalId;
+        document.getElementById('earlyReturnModal').classList.remove('hidden');
+        
+        // Set form action
+        const form = document.getElementById('earlyReturnForm');
+        form.action = `/rentals/${rentalId}/early-return`;
+        
+        // Calculate and display refund info (simplified - you might want to fetch actual data)
+        const refundInfo = document.getElementById('refundInfo');
+        refundInfo.innerHTML = `
+            <h4 class="font-medium text-orange-800 dark:text-orange-200 mb-2">Informasi Refund</h4>
+            <div class="text-sm text-orange-700 dark:text-orange-300">
+                <p>• Refund 80% dari hari yang tidak terpakai</p>
+                <p>• Biaya administrasi 20%</p>
+                <p class="mt-2 text-xs">Refund akan diproses dalam 3-5 hari kerja.</p>
+            </div>
+        `;
+    }
+
+    function closeEarlyReturnModal() {
+        document.getElementById('earlyReturnModal').classList.add('hidden');
+        document.getElementById('earlyReturnForm').reset();
+        currentRentalId = null;
+    }
+
+    function openOverdueReturnModal(rentalId) {
+        currentRentalId = rentalId;
+        document.getElementById('overdueReturnModal').classList.remove('hidden');
+        
+        // Set form action - create new route for overdue return
+        const form = document.getElementById('overdueReturnForm');
+        form.action = `/rentals/${rentalId}/overdue-return`;
+        
+        // Display penalty info (you might want to fetch actual data)
+        const penaltyInfo = document.getElementById('penaltyInfo');
+        penaltyInfo.innerHTML = `
+            <h4 class="font-medium text-red-800 dark:text-red-200 mb-2">Informasi Denda</h4>
+            <div class="text-sm text-red-700 dark:text-red-300">
+                <p>• Denda: Rp 5.000 per hari keterlambatan</p>
+                <p>• Total denda akan ditambahkan ke tagihan</p>
+                <p>• Pembayaran wajib dilakukan dalam 7 hari</p>
+                <p class="mt-2 text-xs font-semibold">Dengan mengembalikan server, Anda menyetujui pembayaran denda.</p>
+            </div>
+        `;
+    }
+
+    function closeOverdueReturnModal() {
+        document.getElementById('overdueReturnModal').classList.add('hidden');
+        document.getElementById('overdueReturnForm').reset();
+        currentRentalId = null;
+    }
+
+    // Close modals when clicking outside
+    document.getElementById('earlyReturnModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEarlyReturnModal();
+        }
+    });
+
+    document.getElementById('overdueReturnModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeOverdueReturnModal();
+        }
+    });
+    </script>
 </x-app-layout>
