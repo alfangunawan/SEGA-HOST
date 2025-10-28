@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password',
         'profile_photo',
         'role',
+        'balance',
     ];
 
     protected $hidden = [
@@ -29,6 +30,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'balance' => 'decimal:2',
         ];
     }
 
@@ -69,5 +71,68 @@ class User extends Authenticatable
         return $this->profile_photo
             ? asset('storage/' . $this->profile_photo)
             : null;
+    }
+
+    /**
+     * Determine whether the user has enough balance for a given amount.
+     */
+    public function hasSufficientBalance(float $amount): bool
+    {
+        if ($amount <= 0) {
+            return true;
+        }
+
+        return round(((float) $this->balance) - $amount, 2) >= 0;
+    }
+
+    /**
+     * Adjust the user's balance by the given amount. Must be called inside a transaction.
+     */
+    public function adjustBalance(float $amount): void
+    {
+        if (abs($amount) < 0.00001) {
+            return;
+        }
+
+        $lockedUser = static::query()
+            ->whereKey($this->getKey())
+            ->lockForUpdate()
+            ->first();
+
+        if (!$lockedUser) {
+            return;
+        }
+
+        $newBalance = round(((float) $lockedUser->balance) + $amount, 2);
+
+        $lockedUser->forceFill([
+            'balance' => $newBalance,
+        ])->save();
+
+        $this->balance = $lockedUser->balance;
+    }
+
+    /**
+     * Reduce the user's balance by the given amount. Must be called inside a transaction.
+     */
+    public function deductBalance(float $amount): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $this->adjustBalance($amount * -1);
+    }
+
+    /**
+     * Increase the user's balance by the given amount. Must be called inside a transaction.
+     */
+    public function creditBalance(float $amount): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $this->adjustBalance($amount);
     }
 }
