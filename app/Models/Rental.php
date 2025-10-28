@@ -5,10 +5,31 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Rental extends Model
 {
     use HasFactory;
+
+    public const STATUS_DEFAULT = 'pending';
+
+    public const STATUS_LABELS = [
+        'pending' => 'Menunggu Konfirmasi',
+        'active' => 'Sedang Berjalan',
+        'completed' => 'Selesai',
+        'cancelled' => 'Dibatalkan',
+        'overdue' => 'Terlambat',
+        'returned_early' => 'Dikembalikan Lebih Awal',
+    ];
+
+    public const STATUS_BADGE_CLASSES = [
+        'pending' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200',
+        'active' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200',
+        'completed' => 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200',
+        'cancelled' => 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
+        'overdue' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+        'returned_early' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200',
+    ];
 
     protected $fillable = [
         'user_id',
@@ -42,6 +63,25 @@ class Rental extends Model
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public static function availableStatuses(): array
+    {
+        return array_keys(self::STATUS_LABELS);
+    }
+
+    public static function statusLabel(?string $status): string
+    {
+        $status = $status ?? self::STATUS_DEFAULT;
+
+        $label = self::STATUS_LABELS[$status] ?? Str::title(str_replace('_', ' ', (string) $status));
+
+        return __($label);
+    }
+
+    public static function statusBadgeClasses(?string $status): string
+    {
+        return self::STATUS_BADGE_CLASSES[$status] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
     }
 
     /**

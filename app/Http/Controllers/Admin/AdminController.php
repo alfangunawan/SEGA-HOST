@@ -17,13 +17,13 @@ class AdminController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
 
         // Get active rentals count
-        $activeRentals = Rental::where('status', 'ongoing')->count();
+        $activeRentals = Rental::where('status', 'active')->count();
 
         // Get late rentals count
-        $lateRentals = Rental::where('status', 'late')->count();
+        $lateRentals = Rental::where('status', 'overdue')->count();
 
         // Get completed rentals today
-        $completedToday = Rental::where('status', 'returned')
+        $completedToday = Rental::whereIn('status', ['completed', 'returned_early'])
             ->whereDate('updated_at', $now->toDateString())
             ->count();
 
@@ -32,7 +32,7 @@ class AdminController extends Controller
             ->sum('total_cost');
 
         // Get pending returns
-        $pendingReturns = Rental::where('status', 'ongoing')
+        $pendingReturns = Rental::where('status', 'active')
             ->whereDate('end_date', '<=', $now->copy()->addDays(1)->toDateString())
             ->count();
 
