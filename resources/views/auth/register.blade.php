@@ -49,4 +49,15 @@
             </x-primary-button>
         </div>
     </form>
+
+    <!-- Login Link Section -->
+    <div class="flex items-center justify-center mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <span class="text-sm text-gray-600 dark:text-gray-400 mr-2">
+            {{ __("Already have an account?") }}
+        </span>
+        <a href="{{ route('login') }}" 
+           class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium underline rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+            {{ __('Sign In') }}
+        </a>
+    </div>
 </x-guest-layout>
