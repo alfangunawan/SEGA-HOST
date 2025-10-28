@@ -145,7 +145,10 @@
                             @php
                                 $fieldId = 'configuration_' . $field->id;
                                 $fieldName = 'configuration[' . $field->id . ']';
-                                $fieldValue = $configurationValues[$field->id] ?? '';
+                                $storedValues = is_array($configurationValues ?? null) ? $configurationValues : [];
+                                $hasExistingValue = array_key_exists($field->id, $storedValues);
+                                $fieldDefault = $field->default_value ?? '';
+                                $fieldValue = $hasExistingValue ? $storedValues[$field->id] : $fieldDefault;
                                 $fieldMeta = $field->meta ?? [];
                             @endphp
                             <div>

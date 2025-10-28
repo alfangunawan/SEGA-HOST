@@ -35,6 +35,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('configurations', ConfigurationProfileController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
     Route::resource('rentals', AdminRentalController::class)->except(['show']);
+    Route::patch('rentals/{rental}/approve', [AdminRentalController::class, 'approve'])->name('rentals.approve');
+    Route::patch('rentals/{rental}/reject', [AdminRentalController::class, 'reject'])->name('rentals.reject');
     Route::resource('users', UserController::class)->except(['show']);
     Route::get('rekap', [RekapController::class, 'index'])->name('rekap.index');
 });
