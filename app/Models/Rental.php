@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 
 class Rental extends Model
 {
@@ -13,7 +12,7 @@ class Rental extends Model
 
     protected $fillable = [
         'user_id',
-        'unit_id', 
+        'unit_id',
         'start_date',
         'end_date',
         'status',
@@ -27,12 +26,6 @@ class Rental extends Model
         'end_date' => 'date',
         'total_cost' => 'decimal:2',
         'penalty_cost' => 'decimal:2',
-    ];
-
-    protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'total_cost' => 'decimal:2',
     ];
 
     /**
@@ -67,7 +60,7 @@ class Rental extends Model
         if (!$this->isOverdue()) {
             return 0;
         }
-        
+
         return now()->diffInDays($this->end_date);
     }
 
@@ -79,10 +72,10 @@ class Rental extends Model
         if (!$this->isOverdue()) {
             return 0;
         }
-        
+
         $daysOverdue = $this->daysOverdue();
         $dailyPenalty = $this->unit->price_per_day * 0.5; // 50% of daily rate
-        
+
         return $daysOverdue * $dailyPenalty;
     }
 
@@ -102,12 +95,12 @@ class Rental extends Model
         if (!$this->canBeReturnedEarly()) {
             return 0;
         }
-        
+
         $unusedDays = now()->diffInDays($this->end_date, false);
         if ($unusedDays <= 0) {
             return 0;
         }
-        
+
         // 80% refund for unused days
         return ($this->unit->price_per_day * $unusedDays) * 0.8;
     }

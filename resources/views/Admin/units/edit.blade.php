@@ -5,7 +5,8 @@
 @section('subheader', __('Perbarui detail unit dan kategori yang terkait.'))
 
 @section('content')
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+    <div
+        class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
         <form action="{{ route('admin.units.update', $unit) }}" method="POST">
             @method('PUT')
             @include('admin.units._form', ['submitLabel' => __('Perbarui')])
