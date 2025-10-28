@@ -32,7 +32,7 @@ class RentalController extends Controller
         // Filter by status if provided
         if ($request->has('status') && $request->status) {
             $status = $request->status;
-            
+
             // Group returned_early with completed for "Selesai" filter
             if ($status === Rental::STATUS_COMPLETED) {
                 $query->whereIn('status', Rental::getCompletedStatuses());
@@ -51,8 +51,8 @@ class RentalController extends Controller
             'pending' => Rental::where('user_id', $userId)->where('status', Rental::STATUS_PENDING)->count(),
             'overdue' => Rental::where('user_id', $userId)->where('status', Rental::STATUS_OVERDUE)->count(),
             'completed' => Rental::where('user_id', $userId)
-                                ->whereIn('status', Rental::getCompletedStatuses())
-                                ->count(),
+                ->whereIn('status', Rental::getCompletedStatuses())
+                ->count(),
         ];
 
         return view('User.rental.index', compact('rentals', 'stats'));
@@ -205,7 +205,14 @@ class RentalController extends Controller
             }
         }
 
-        $rental->load('unit');
+        $rental->load([
+            'unit' => function ($query) {
+                $query->with([
+                    'configurationProfile.fields',
+                    'configurationValues.field',
+                ]);
+            },
+        ]);
 
         return view('User.rental.show', compact('rental'));
     }
@@ -426,13 +433,13 @@ class RentalController extends Controller
                 if ($lockedUser && $penaltyAmount > 0) {
                     $currentBalance = (float) $lockedUser->balance;
                     $newBalance = round($currentBalance - $penaltyAmount, 2);
-                    
+
                     Log::info("Balance deduction - User: {$lockedUser->id}, Current: {$currentBalance}, Penalty: {$penaltyAmount}, New: {$newBalance}");
-                    
+
                     $lockedUser->forceFill([
                         'balance' => $newBalance,
                     ])->save();
-                    
+
                     // Verify balance was updated
                     $lockedUser->refresh();
                     Log::info("Balance after update: " . $lockedUser->balance);
@@ -440,7 +447,7 @@ class RentalController extends Controller
 
                 // Update rental status
                 $note = ($lockedRental->notes ? $lockedRental->notes . "\n\n" : '') .
-                    'Returned with penalty on ' . now()->format('Y-m-d H:i:s') . 
+                    'Returned with penalty on ' . now()->format('Y-m-d H:i:s') .
                     '. Reason: ' . $validated['return_reason'] .
                     '. Penalty: Rp ' . number_format($penaltyAmount, 0, ',', '.');
 
@@ -457,7 +464,8 @@ class RentalController extends Controller
                 }
             });
 
-            return redirect()->route('rentals.index')->with('success', 
+            return redirect()->route('rentals.index')->with(
+                'success',
                 'Server berhasil dikembalikan! Denda sebesar Rp ' . number_format($rental->calculatePenalty(), 0, ',', '.') . ' telah dipotong dari saldo Anda.'
             );
         } catch (\Throwable $e) {

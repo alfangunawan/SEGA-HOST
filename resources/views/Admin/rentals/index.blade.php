@@ -61,32 +61,40 @@
                 <tr>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                        {{ __('Penyewa') }}</th>
+                        {{ __('Penyewa') }}
+                    </th>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                        {{ __('Unit') }}</th>
+                        {{ __('Unit') }}
+                    </th>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                        {{ __('Periode') }}</th>
+                        {{ __('Periode') }}
+                    </th>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                        {{ __('Status') }}</th>
+                        {{ __('Status') }}
+                    </th>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                        {{ __('Denda') }}</th>
+                        {{ __('Denda') }}
+                    </th>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                        {{ __('Total Biaya') }}</th>
+                        {{ __('Total Biaya') }}
+                    </th>
                     <th
                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 dark:text-gray-300">
-                        {{ __('Aksi') }}</th>
+                        {{ __('Aksi') }}
+                    </th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:bg-slate-900 dark:divide-slate-800">
                 @forelse ($rentals as $rental)
                 <tr>
                     <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {{ $rental->user->name ?? '-' }}</td>
+                        {{ $rental->user->name ?? '-' }}
+                    </td>
                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">{{ $rental->unit->name ?? '-' }}</td>
                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
                         {{ optional($rental->start_date)->translatedFormat('d M Y') }}
@@ -104,37 +112,38 @@
                         {{ ($rental->penalty_cost ?? 0) > 0 ? 'Rp ' . number_format($rental->penalty_cost, 0, ',', '.') : '-' }}
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-100">Rp
-                        {{ number_format($rental->total_cost, 2, ',', '.') }}</td>
+                        {{ number_format($rental->total_cost, 2, ',', '.') }}
+                    </td>
                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
                         <div class="flex items-center gap-2">
                             @if ($rental->status === 'pending')
                                 <form action="{{ route('admin.rentals.approve', $rental) }}" method="POST"
-                                      class="inline-flex"
-                                      onsubmit="return confirm('{{ __('Setujui peminjaman ini? Status akan menjadi sedang berjalan.') }}')">
+                                    class="inline-flex"
+                                    onsubmit="return confirm('{{ __('Setujui peminjaman ini? Status akan menjadi sedang berjalan.') }}')">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
-                                            title="{{ __('Setujui peminjaman') }}">
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
+                                        title="{{ __('Setujui peminjaman') }}">
                                         <span class="sr-only">{{ __('Setujui peminjaman') }}</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                             stroke="currentColor" stroke-width="2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
                                     </button>
                                 </form>
 
                                 <form action="{{ route('admin.rentals.reject', $rental) }}" method="POST"
-                                      class="inline-flex"
-                                      onsubmit="return confirm('{{ __('Tolak peminjaman ini? Status akan menjadi dibatalkan.') }}')">
+                                    class="inline-flex"
+                                    onsubmit="return confirm('{{ __('Tolak peminjaman ini? Status akan menjadi dibatalkan.') }}')">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/20"
-                                            title="{{ __('Tolak peminjaman') }}">
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/20"
+                                        title="{{ __('Tolak peminjaman') }}">
                                         <span class="sr-only">{{ __('Tolak peminjaman') }}</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                             stroke="currentColor" stroke-width="2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
@@ -156,7 +165,8 @@
                 @empty
                 <tr>
                     <td colspan="7" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-300">
-                        {{ __('Belum ada data peminjaman.') }}</td>
+                        {{ __('Belum ada data peminjaman.') }}
+                    </td>
                 </tr>
                 @endforelse
             </tbody>
