@@ -7,7 +7,7 @@
 @section('content')
     <div class="space-y-6">
         @if (session('status'))
-            <div class="rounded-md bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700">
+            <div class="rounded-md bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
                 {{ session('status') }}
             </div>
         @endif
@@ -17,8 +17,8 @@
                 <div class="relative">
                     <input type="text" name="search" placeholder="{{ __('Cari unit berdasarkan nama...') }}"
                         value="{{ $search }}"
-                        class="w-64 rounded-md border-gray-300 pl-10 pr-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                        class="w-64 rounded-md border-gray-300 pl-10 pr-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100">
+                    <span class="absolute inset-y-0 left-3 flex items-center text-gray-400 dark:text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -32,7 +32,7 @@
                 </button>
                 @if ($search)
                     <a href="{{ route('admin.units.index') }}"
-                        class="text-sm text-gray-500 hover:text-gray-700">{{ __('Reset') }}</a>
+                        class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-200">{{ __('Reset') }}</a>
                 @endif
             </form>
 
@@ -46,62 +46,62 @@
             </a>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-800">
+                <thead class="bg-gray-50 dark:bg-slate-900/60">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Nama') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Status') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Harga / Hari') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Denda') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Kategori') }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 dark:text-gray-300">
                             {{ __('Aksi') }}</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200 dark:bg-slate-900 dark:divide-slate-800">
                     @forelse ($units as $unit)
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $unit->name }}</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $unit->name }}</td>
                             <td class="px-4 py-3 text-sm">
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
                                             @class([
-                                                'bg-emerald-100 text-emerald-700' => $unit->status === 'available',
-                                                'bg-amber-100 text-amber-700' => $unit->status === 'maintenance',
-                                                'bg-rose-100 text-rose-700' => $unit->status === 'rented',
+                                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200' => $unit->status === 'available',
+                                                'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200' => $unit->status === 'maintenance',
+                                                'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200' => $unit->status === 'rented',
                                             ])">
                                     {{ ucfirst($unit->status) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-700">Rp
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">Rp
                                 {{ number_format($unit->price_per_day, 2, ',', '.') }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700">Rp
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">Rp
                                 {{ number_format($unit->penalty, 2, ',', '.') }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">
+                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
                                 {{ $unit->categories->isNotEmpty() ? $unit->categories->pluck('name')->implode(', ') : '-' }}
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-500">
+                            <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('admin.units.edit', $unit) }}"
-                                        class="text-indigo-600 hover:text-indigo-500 font-medium">{{ __('Edit') }}</a>
+                                        class="text-indigo-600 hover:text-indigo-500 font-medium dark:text-indigo-300 dark:hover:text-indigo-200">{{ __('Edit') }}</a>
                                     <form action="{{ route('admin.units.destroy', $unit) }}" method="POST"
                                         onsubmit="return confirm('{{ __('Hapus unit ini?') }}')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="text-rose-600 hover:text-rose-500 font-medium">{{ __('Hapus') }}</button>
+                                            class="text-rose-600 hover:text-rose-500 font-medium dark:text-rose-300 dark:hover:text-rose-200">{{ __('Hapus') }}</button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">
+                            <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-300">
                                 {{ __('Belum ada unit yang ditambahkan.') }}</td>
                         </tr>
                     @endforelse
@@ -109,6 +109,8 @@
             </table>
         </div>
 
-        {{ $units->links() }}
+        <div class="dark:text-gray-300">
+            {{ $units->links() }}
+        </div>
     </div>
 @endsection
