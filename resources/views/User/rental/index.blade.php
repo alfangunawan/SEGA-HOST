@@ -259,42 +259,37 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- Total yang harus dibayar -->
+                                        <!-- Total DENDA yang harus dibayar (BUKAN total keseluruhan) -->
                                         <div class="mt-3 pt-3 border-t border-red-200 dark:border-red-700">
                                             <div class="flex justify-between items-center">
-                                                <span class="text-sm font-medium text-red-700 dark:text-red-300">Total yang harus dibayar:</span>
+                                                <span class="text-sm font-medium text-red-700 dark:text-red-300">
+                                                    Denda yang harus dibayar:
+                                                    <div class="text-xs text-red-500">
+                                                        (Biaya rental sudah dibayar)
+                                                    </div>
+                                                </span>
                                                 <span class="text-lg font-bold text-red-800 dark:text-red-200">
-                                                    Rp {{ number_format($rental->total_cost + ($rental->penalty_cost > 0 ? $rental->penalty_cost : $rental->calculatePenalty()), 0, ',', '.') }}
+                                                    @php
+                                                        $penaltyAmount = $rental->penalty_cost > 0 ? $rental->penalty_cost : $rental->calculatePenalty();
+                                                    @endphp
+                                                    Rp {{ number_format($penaltyAmount, 0, ',', '.') }}
                                                 </span>
                                             </div>
                                             <div class="text-xs text-red-600 dark:text-red-400 mt-1">
-                                                (Biaya rental: Rp {{ number_format($rental->total_cost, 0, ',', '.') }} + Denda: Rp {{ number_format($rental->penalty_cost > 0 ? $rental->penalty_cost : $rental->calculatePenalty(), 0, ',', '.') }})
+                                                Biaya rental (Rp {{ number_format($rental->total_cost, 0, ',', '.') }}) sudah dibayar saat penyewaan
                                             </div>
                                         </div>
                                     </div>
                                 @elseif($rental->penalty_cost > 0)
                                     <!-- Info Denda untuk status completed/returned_early yang pernah overdue -->
-                                    <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                    <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                                         <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                            </svg>
-                                            <span class="text-sm text-red-700 dark:text-red-300">
-                                                Denda keterlambatan: <span class="font-semibold">Rp {{ number_format($rental->penalty_cost, 0, ',', '.') }}</span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                @if($rental->penalty_cost < 0)
-                                    <!-- Info Refund untuk early return -->
-                                    <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            <span class="text-sm text-green-700 dark:text-green-300">
-                                                Refund pengembalian lebih awal: <span class="font-semibold">Rp {{ number_format(abs($rental->penalty_cost), 0, ',', '.') }}</span>
+                                            <span class="text-sm text-blue-700 dark:text-blue-300">
+                                                Denda keterlambatan: <span class="font-semibold">Rp {{ number_format($rental->penalty_cost, 0, ',', '.') }}</span>
+                                                <span class="text-xs text-green-600"> (✓ Sudah dibayar)</span>
                                             </span>
                                         </div>
                                     </div>
@@ -330,17 +325,15 @@
                                                 Kelola Server
                                             </a>
                                         @endif
-                                        
                                         @if($rental->status === 'overdue')
-                                            <!-- Tombol Detail Penyewaan - untuk rental terlambat -->
+                                            <!-- Tombol Kelola Server - untuk rental aktif -->
                                             <a href="{{ route('rentals.show', $rental) }}" 
-                                               class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                </svg>
-                                                Detail Penyewaan
+                                               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
+                                                Kelola Server
                                             </a>
                                         @endif
+                                        
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -503,6 +496,81 @@
         </div>
     </div>
 
+    <!-- Penalty Return Modal -->
+    <div id="penaltyReturnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Kembalikan Server dengan Denda
+                    </h3>
+                    <button onclick="closePenaltyReturnModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" id="penaltyReturnForm">
+                    @csrf
+                    @method('PATCH')
+                    
+                    <div class="mb-4">
+                        <label for="penalty_return_reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Alasan pengembalian *
+                        </label>
+                        <textarea id="penalty_return_reason" name="return_reason" rows="3" required
+                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                  placeholder="Jelaskan alasan pengembalian server..."></textarea>
+                    </div>
+
+                    <!-- Penalty Info Display -->
+                    <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <h4 class="font-medium text-red-800 dark:text-red-200 mb-2">Informasi Denda</h4>
+                        <div class="text-sm text-red-700 dark:text-red-300 space-y-2">
+                            <div class="flex justify-between">
+                                <span>Denda keterlambatan:</span>
+                                <span class="font-semibold" id="penaltyAmount">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Saldo saat ini:</span>
+                                <span class="font-semibold">Rp {{ number_format(Auth::user()->balance, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-red-300 pt-2">
+                                <span>Saldo setelah denda:</span>
+                                <span class="font-bold" id="balanceAfterPenalty">Rp 0</span>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-red-600 dark:text-red-400">
+                            Denda akan langsung dipotong dari saldo Anda saat mengembalikan server.
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="confirm_penalty" value="1" required
+                                   class="rounded border-gray-300 text-red-600 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                Saya memahami dan menyetujui pemotongan denda dari saldo saya.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closePenaltyReturnModal()"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                            Kembalikan & Bayar Denda
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
     let currentRentalId = null;
 
@@ -559,6 +627,36 @@
         currentRentalId = null;
     }
 
+    function openPenaltyReturnModal(rentalId, penaltyAmount) {
+        currentRentalId = rentalId;
+        document.getElementById('penaltyReturnModal').classList.remove('hidden');
+        
+        // Set form action
+        const form = document.getElementById('penaltyReturnForm');
+        form.action = `/rentals/${rentalId}/return-with-penalty`;
+        
+        // Update penalty information
+        const currentBalance = {{ Auth::user()->balance }};
+        const balanceAfterPenalty = currentBalance - penaltyAmount;
+        
+        document.getElementById('penaltyAmount').textContent = 'Rp ' + penaltyAmount.toLocaleString('id-ID');
+        document.getElementById('balanceAfterPenalty').textContent = 'Rp ' + balanceAfterPenalty.toLocaleString('id-ID');
+        
+        // Change color if balance will be negative
+        const balanceElement = document.getElementById('balanceAfterPenalty');
+        if (balanceAfterPenalty < 0) {
+            balanceElement.classList.add('text-red-600');
+        } else {
+            balanceElement.classList.remove('text-red-600');
+        }
+    }
+
+    function closePenaltyReturnModal() {
+        document.getElementById('penaltyReturnModal').classList.add('hidden');
+        document.getElementById('penaltyReturnForm').reset();
+        currentRentalId = null;
+    }
+
     // Close modals when clicking outside
     document.getElementById('earlyReturnModal').addEventListener('click', function(e) {
         if (e.target === this) {
@@ -569,6 +667,12 @@
     document.getElementById('overdueReturnModal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeOverdueReturnModal();
+        }
+    });
+
+    document.getElementById('penaltyReturnModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePenaltyReturnModal();
         }
     });
     </script>

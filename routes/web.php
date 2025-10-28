@@ -50,9 +50,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/rentals', [UserRentalController::class, 'store'])->name('rentals.store');
     Route::get('/rentals/{rental}', [UserRentalController::class, 'show'])->name('rentals.show');
     Route::patch('/rentals/{rental}/cancel', [UserRentalController::class, 'cancel'])->name('rentals.cancel');
-    Route::post('/rentals/{rental}/extend', [UserRentalController::class, 'extend'])->name('rentals.extend');
-    Route::post('/rentals/{rental}/early-return', [UserRentalController::class, 'earlyReturn'])->name('rentals.early-return');
-    Route::post('/rentals/{rental}/return', [UserRentalController::class, 'return'])->name('rentals.return');
+    Route::patch('/rentals/{rental}/early-return', [UserRentalController::class, 'earlyReturn'])->name('rentals.early-return');
+    Route::patch('/rentals/{rental}/return-with-penalty', [UserRentalController::class, 'returnWithPenalty'])->name('rentals.return-with-penalty');
 });
 
 require __DIR__ . '/auth.php';

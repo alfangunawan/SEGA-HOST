@@ -12,18 +12,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
-
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-
 
 class RentalController extends Controller
 {
     /**
      * Display a listing of rentals for the authenticated user.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
+        // Auto-update overdue rentals before displaying
+        $this->updateOverdueRentals();
+
         $query = Rental::with(['unit'])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc');
@@ -33,8 +34,8 @@ class RentalController extends Controller
             $status = $request->status;
             
             // Group returned_early with completed for "Selesai" filter
-            if ($status === 'completed') {
-                $query->whereIn('status', ['completed', 'returned_early']);
+            if ($status === Rental::STATUS_COMPLETED) {
+                $query->whereIn('status', Rental::getCompletedStatuses());
             } else {
                 $query->where('status', $status);
             }
@@ -42,15 +43,16 @@ class RentalController extends Controller
 
         $rentals = $query->paginate(10);
 
-        // Calculate stats - group returned_early with completed
+        // Calculate stats using consistent grouping
+        $userId = Auth::id();
         $stats = [
-            'total' => Rental::where('user_id', Auth::id())->count(),
-            'active' => Rental::where('user_id', Auth::id())->where('status', 'active')->count(),
-            'pending' => Rental::where('user_id', Auth::id())->where('status', 'pending')->count(),
-            'overdue' => Rental::where('user_id', Auth::id())->where('status', 'overdue')->count(),
-            'completed' => Rental::where('user_id', Auth::id())
-                                ->whereIn('status', ['completed', 'returned_early'])
-                                ->count(), // Gabungkan completed dan returned_early
+            'total' => Rental::where('user_id', $userId)->count(),
+            'active' => Rental::where('user_id', $userId)->where('status', Rental::STATUS_ACTIVE)->count(),
+            'pending' => Rental::where('user_id', $userId)->where('status', Rental::STATUS_PENDING)->count(),
+            'overdue' => Rental::where('user_id', $userId)->where('status', Rental::STATUS_OVERDUE)->count(),
+            'completed' => Rental::where('user_id', $userId)
+                                ->whereIn('status', Rental::getCompletedStatuses())
+                                ->count(),
         ];
 
         return view('User.rental.index', compact('rentals', 'stats'));
@@ -59,7 +61,7 @@ class RentalController extends Controller
     /**
      * Show the form for creating a new rental.
      */
-    public function create(Request $request)
+    public function create(Request $request): View|RedirectResponse
     {
         $user = $request->user();
 
@@ -100,7 +102,7 @@ class RentalController extends Controller
 
         $validated = $request->validate([
             'unit_id' => ['required', 'exists:units,id'],
-            'rental_days' => ['required', 'integer', 'min:1', 'max:5'],
+            'rental_days' => ['required', 'integer', 'min:1', 'max:' . Rental::MAX_RENTAL_DAYS],
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'terms_accepted' => ['required', 'accepted'],
         ]);
@@ -181,11 +183,26 @@ class RentalController extends Controller
     /**
      * Display the specified rental.
      */
-    public function show(Rental $rental)
+    public function show(Rental $rental): View
     {
         // Ensure user can only see their own rentals
         if ($rental->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to rental.');
+        }
+
+        // Auto-update rental status if it's overdue
+        if ($rental->status === Rental::STATUS_ACTIVE && now() > $rental->end_date) {
+            try {
+                $penalty = $rental->calculatePenalty();
+                $rental->update([
+                    'status' => Rental::STATUS_OVERDUE,
+                    'penalty_cost' => $penalty
+                ]);
+                // Refresh the model to get updated values
+                $rental->refresh();
+            } catch (\Throwable $e) {
+                Log::error('Auto-update overdue rental failed: ' . $e->getMessage());
+            }
         }
 
         $rental->load('unit');
@@ -196,7 +213,7 @@ class RentalController extends Controller
     /**
      * Cancel a pending rental.
      */
-    public function cancel(Rental $rental)
+    public function cancel(Rental $rental): RedirectResponse
     {
         // Ensure user can only cancel their own rentals
         if ($rental->user_id !== Auth::id()) {
@@ -204,7 +221,7 @@ class RentalController extends Controller
         }
 
         // Can only cancel pending rentals
-        if ($rental->status !== 'pending') {
+        if ($rental->status !== Rental::STATUS_PENDING) {
             return back()->with('error', 'Only pending rentals can be cancelled.');
         }
 
@@ -218,7 +235,7 @@ class RentalController extends Controller
                     'Cancelled by user on ' . now()->format('Y-m-d H:i:s');
 
                 $lockedRental->update([
-                    'status' => 'cancelled',
+                    'status' => Rental::STATUS_CANCELLED,
                     'notes' => $note,
                     'penalty_cost' => null,
                 ]);
@@ -246,7 +263,7 @@ class RentalController extends Controller
     /**
      * Extend a rental period.
      */
-    public function extend(Rental $rental, Request $request)
+    public function extend(Rental $rental, Request $request): RedirectResponse
     {
         // Ensure user can only extend their own rentals
         if ($rental->user_id !== Auth::id()) {
@@ -254,7 +271,7 @@ class RentalController extends Controller
         }
 
         // Can only extend active rentals
-        if ($rental->status !== 'active') {
+        if ($rental->status !== Rental::STATUS_ACTIVE) {
             return back()->with('error', 'Only active rentals can be extended.');
         }
 
@@ -305,25 +322,9 @@ class RentalController extends Controller
     }
 
     /**
-     * Return a rented unit (for admin use).
-     */
-    public function return(Rental $rental)
-    {
-        // This would typically be admin-only functionality
-        if ($rental->status !== 'active') {
-            return back()->with('error', 'Only active rentals can be returned.');
-        }
-
-        $rental->update(['status' => 'completed']);
-        $rental->unit->update(['status' => 'available']);
-
-        return back()->with('success', 'Rental marked as completed.');
-    }
-
-    /**
      * Early return of an active rental by user
      */
-    public function earlyReturn(Rental $rental, Request $request)
+    public function earlyReturn(Rental $rental, Request $request): RedirectResponse
     {
         // Ensure user can only return their own rentals
         if ($rental->user_id !== Auth::id()) {
@@ -331,7 +332,7 @@ class RentalController extends Controller
         }
 
         // Can only return active rentals
-        if ($rental->status !== 'active') {
+        if ($rental->status !== Rental::STATUS_ACTIVE) {
             return back()->with('error', 'Only active rentals can be returned early.');
         }
 
@@ -342,12 +343,14 @@ class RentalController extends Controller
 
         // Calculate refund (if any) - based on unused days
         $today = Carbon::today();
-        $unusedDays = $today->diffInDays($rental->end_date, false);
+        $totalDays = $rental->start_date->diffInDays($rental->end_date) + 1;
+        $usedDays = $rental->start_date->diffInDays($today) + 1;
+        $unusedDays = max(0, $totalDays - $usedDays);
         $refundAmount = 0;
 
         if ($unusedDays > 0) {
-            // Refund 80% of unused days (20% as processing fee)
-            $refundAmount = ($rental->unit->price_per_day * $unusedDays) * 0.8;
+            // Refund percentage of unused days (processing fee deducted)
+            $refundAmount = ($rental->unit->price_per_day * $unusedDays) * Rental::REFUND_PERCENTAGE;
         }
 
         try {
@@ -360,7 +363,7 @@ class RentalController extends Controller
                     'Early return on ' . $today->format('Y-m-d') . '. Reason: ' . $validated['return_reason'];
 
                 $lockedRental->update([
-                    'status' => 'returned_early',
+                    'status' => Rental::STATUS_RETURNED_EARLY,
                     'end_date' => $today,
                     'notes' => $note,
                     'penalty_cost' => $refundAmount > 0 ? -$refundAmount : null,
@@ -391,9 +394,9 @@ class RentalController extends Controller
     }
 
     /**
-     * Return overdue rental with penalty
+     * Return overdue rental with penalty deduction from balance
      */
-    public function overdueReturn(Rental $rental, Request $request)
+    public function returnWithPenalty(Rental $rental, Request $request): RedirectResponse
     {
         // Ensure user can only return their own rentals
         if ($rental->user_id !== Auth::id()) {
@@ -401,7 +404,7 @@ class RentalController extends Controller
         }
 
         // Can only return overdue rentals
-        if ($rental->status !== 'overdue') {
+        if ($rental->status !== Rental::STATUS_OVERDUE) {
             return back()->with('error', 'Only overdue rentals can be returned with penalty.');
         }
 
@@ -410,33 +413,67 @@ class RentalController extends Controller
             'confirm_penalty' => ['required', 'accepted'],
         ]);
 
-        // Apply penalty if not already applied
-        if ($rental->penalty_cost == 0) {
-            $rental->applyOverduePenalty();
+        try {
+            DB::transaction(function () use ($rental, $validated) {
+                $lockedRental = Rental::query()->whereKey($rental->id)->lockForUpdate()->firstOrFail();
+                $lockedUnit = Unit::query()->whereKey($lockedRental->unit_id)->lockForUpdate()->first();
+                $lockedUser = User::query()->whereKey($lockedRental->user_id)->lockForUpdate()->first();
+
+                // Calculate penalty amount
+                $penaltyAmount = $lockedRental->penalty_cost > 0 ? $lockedRental->penalty_cost : $lockedRental->calculatePenalty();
+
+                // Deduct penalty from user balance
+                if ($lockedUser && $penaltyAmount > 0) {
+                    $currentBalance = (float) $lockedUser->balance;
+                    $newBalance = round($currentBalance - $penaltyAmount, 2);
+                    
+                    Log::info("Balance deduction - User: {$lockedUser->id}, Current: {$currentBalance}, Penalty: {$penaltyAmount}, New: {$newBalance}");
+                    
+                    $lockedUser->forceFill([
+                        'balance' => $newBalance,
+                    ])->save();
+                    
+                    // Verify balance was updated
+                    $lockedUser->refresh();
+                    Log::info("Balance after update: " . $lockedUser->balance);
+                }
+
+                // Update rental status
+                $note = ($lockedRental->notes ? $lockedRental->notes . "\n\n" : '') .
+                    'Returned with penalty on ' . now()->format('Y-m-d H:i:s') . 
+                    '. Reason: ' . $validated['return_reason'] .
+                    '. Penalty: Rp ' . number_format($penaltyAmount, 0, ',', '.');
+
+                $lockedRental->update([
+                    'status' => Rental::STATUS_COMPLETED,
+                    'notes' => $note,
+                    'penalty_cost' => $penaltyAmount,
+                    'final_settlement' => $lockedRental->total_cost + $penaltyAmount,
+                ]);
+
+                // Make unit available again
+                if ($lockedUnit) {
+                    $lockedUnit->update(['status' => 'available']);
+                }
+            });
+
+            return redirect()->route('rentals.index')->with('success', 
+                'Server berhasil dikembalikan! Denda sebesar Rp ' . number_format($rental->calculatePenalty(), 0, ',', '.') . ' telah dipotong dari saldo Anda.'
+            );
+        } catch (\Throwable $e) {
+            Log::error('Penalty return failed: ' . $e->getMessage(), [
+                'rental_id' => $rental->id,
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Pengembalian server gagal diproses. Silakan coba lagi.');
         }
-
-        // Update rental
-        $rental->update([
-            'status' => 'completed',
-            'notes' => ($rental->notes ? $rental->notes . "\n\n" : '') . 
-                       "Returned with penalty on " . now()->format('Y-m-d') . ". Reason: " . $validated['return_reason'],
-        ]);
-
-        // Make unit available again
-        $rental->unit->update(['status' => 'available']);
-
-        $totalPayment = $rental->total_cost + $rental->penalty_cost;
-        $message = 'Server returned successfully! ';
-        $message .= 'Total payment including penalty: Rp ' . number_format($totalPayment, 0, ',', '.') . '. ';
-        $message .= 'Please complete payment within 7 days.';
-
-        return redirect()->route('rentals.index')->with('success', $message);
     }
 
     /**
      * Show payment page
      */
-    public function payment(Rental $rental)
+    public function payment(Rental $rental): View|RedirectResponse
     {
         if ($rental->user_id !== Auth::id()) {
             abort(403);
@@ -453,10 +490,16 @@ class RentalController extends Controller
     /**
      * Process payment
      */
-    public function processPayment(Rental $rental, Request $request)
+    public function processPayment(Rental $rental, Request $request): RedirectResponse
     {
         if ($rental->user_id !== Auth::id()) {
             abort(403);
+        }
+
+        // Check if already paid
+        if ($rental->is_paid) {
+            return redirect()->route('rentals.show', $rental)
+                ->with('info', 'This rental has already been paid.');
         }
 
         $validated = $request->validate([
@@ -464,108 +507,60 @@ class RentalController extends Controller
             'payment_reference' => ['required', 'string', 'max:100'],
         ]);
 
-        // Simulate payment processing
-        $rental->update([
-            'is_paid' => true,
-            'payment_date' => now(),
-            'payment_method' => $validated['payment_method'],
-            'payment_reference' => $validated['payment_reference'],
-            'status' => 'active', // Aktivasi setelah pembayaran
-        ]);
+        try {
+            DB::transaction(function () use ($rental, $validated) {
+                $lockedRental = Rental::query()->whereKey($rental->id)->lockForUpdate()->firstOrFail();
+                $lockedUser = User::query()->whereKey($lockedRental->user_id)->lockForUpdate()->first();
 
-        return redirect()->route('rentals.show', $rental)
-            ->with('success', 'Payment successful! Your server rental is now active.');
+                // Check if user has sufficient balance
+                if (!$lockedUser || !$lockedUser->hasSufficientBalance($lockedRental->total_cost)) {
+                    throw new \Exception('Saldo Anda tidak mencukupi untuk membayar rental ini.');
+                }
+
+                // Deduct payment from user balance
+                $newBalance = round(((float) $lockedUser->balance) - $lockedRental->total_cost, 2);
+                $lockedUser->forceFill([
+                    'balance' => $newBalance,
+                ])->save();
+
+                // Process payment
+                $lockedRental->update([
+                    'is_paid' => true,
+                    'payment_date' => now(),
+                    'payment_method' => $validated['payment_method'],
+                    'payment_reference' => $validated['payment_reference'],
+                    'status' => Rental::STATUS_ACTIVE, // Aktivasi setelah pembayaran
+                ]);
+            });
+
+            return redirect()->route('rentals.show', $rental)
+                ->with('success', 'Pembayaran berhasil! Server rental Anda sekarang aktif. Saldo Anda telah dipotong sebesar Rp ' . number_format($rental->total_cost, 0, ',', '.') . '.');
+        } catch (\Throwable $e) {
+            Log::error('Payment processing failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**
-     * Return rental and calculate final settlement
+     * Auto-update rentals that have become overdue
      */
-    public function returnRental(Rental $rental, Request $request)
+    private function updateOverdueRentals(): void
     {
-        if ($rental->user_id !== Auth::id()) {
-            abort(403);
+        $overdueRentals = Rental::where('user_id', Auth::id())
+            ->where('status', Rental::STATUS_ACTIVE)
+            ->where('end_date', '<', now())
+            ->get();
+
+        foreach ($overdueRentals as $rental) {
+            try {
+                $penalty = $rental->calculatePenalty();
+                $rental->update([
+                    'status' => Rental::STATUS_OVERDUE,
+                    'penalty_cost' => $penalty
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Auto-update overdue rental failed for rental ' . $rental->id . ': ' . $e->getMessage());
+            }
         }
-
-        if ($rental->status !== 'active') {
-            return back()->with('error', 'Only active rentals can be returned.');
-        }
-
-        $validated = $request->validate([
-            'return_reason' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        // Apply final settlement calculation
-        $rental->applyFinalSettlement();
-        
-        // Update status
-        $status = $rental->actual_usage_days > 5 ? 'completed_with_penalty' : 'completed';
-        
-        $rental->update([
-            'status' => $status,
-            'end_date' => Carbon::today(),
-            'notes' => ($rental->notes ? $rental->notes . "\n\n" : '') . 
-                       "Returned on " . Carbon::today()->format('Y-m-d') . 
-                       ($validated['return_reason'] ? ". Reason: " . $validated['return_reason'] : ''),
-        ]);
-
-        $rental->unit->update(['status' => 'available']);
-
-        return redirect()->route('rentals.settlement', $rental)
-            ->with('success', 'Server returned successfully. Please review your final settlement.');
-    }
-
-    /**
-     * Show final settlement
-     */
-    public function settlement(Rental $rental)
-    {
-        if ($rental->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        $settlement = $rental->calculateFinalSettlement();
-        
-        return view('User.rental.settlement', compact('rental', 'settlement'));
-    }
-
-    /**
-     * Process additional payment or refund
-     */
-    public function processSettlement(Rental $rental, Request $request)
-    {
-        if ($rental->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        if ($rental->final_settlement > 0) {
-            // Additional payment required
-            $validated = $request->validate([
-                'payment_method' => ['required', 'in:bank_transfer,credit_card,e_wallet'],
-                'payment_reference' => ['required', 'string', 'max:100'],
-            ]);
-
-            // Process additional payment
-            $rental->update([
-                'payment_method' => $validated['payment_method'] . ' (additional)',
-                'payment_reference' => $validated['payment_reference'] . ' (additional)',
-                'notes' => ($rental->notes ? $rental->notes . "\n\n" : '') . 
-                           "Additional payment of Rp " . number_format($rental->final_settlement, 0, ',', '.') . 
-                           " processed on " . now()->format('Y-m-d H:i:s'),
-            ]);
-
-            $message = 'Additional payment processed successfully!';
-        } else {
-            // Refund will be processed
-            $rental->update([
-                'notes' => ($rental->notes ? $rental->notes . "\n\n" : '') . 
-                           "Refund of Rp " . number_format(abs($rental->final_settlement), 0, ',', '.') . 
-                           " will be processed within 3-5 business days on " . now()->format('Y-m-d H:i:s'),
-            ]);
-
-            $message = 'Your refund will be processed within 3-5 business days.';
-        }
-
-        return redirect()->route('rentals.show', $rental)
-            ->with('success', $message);
     }
 }
