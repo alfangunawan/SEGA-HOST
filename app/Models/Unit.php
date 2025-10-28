@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -19,6 +20,7 @@ class Unit extends Model
         'penalty',
         'ip_address',
         'location',
+        'configuration_profile_id',
     ];
 
     protected $casts = [
@@ -48,5 +50,21 @@ class Unit extends Model
     public function currentRental()
     {
         return $this->hasOne(Rental::class)->where('status', 'active');
+    }
+
+    /**
+     * Configuration profile selected for this unit.
+     */
+    public function configurationProfile(): BelongsTo
+    {
+        return $this->belongsTo(ConfigurationProfile::class);
+    }
+
+    /**
+     * Stored configuration values keyed by field.
+     */
+    public function configurationValues(): HasMany
+    {
+        return $this->hasMany(UnitConfigurationValue::class);
     }
 }

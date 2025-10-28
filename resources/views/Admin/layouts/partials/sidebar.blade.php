@@ -66,6 +66,26 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
         </a>
+        @php($isActive = request()->routeIs('admin.configurations.*'))
+        <a href="{{ route('admin.configurations.index') }}" @click="mobileMenuOpen = false"
+            :title="sidebarCollapsed ? '{{ __('Template Konfigurasi') }}' : ''"
+            class="flex items-center rounded-md px-3 py-2 transition border border-transparent {{ $isActive ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-500/20 dark:text-indigo-200 dark:border-indigo-500/10' : 'hover:bg-gray-100 text-gray-600 dark:hover:bg-slate-800 dark:text-gray-300' }}"
+            :class="sidebarCollapsed ? 'md:justify-center' : 'justify-between'">
+            <div class="flex items-center gap-3">
+                <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h5.586a1 1 0 01.707.293l6.414 6.414a1 1 0 010 1.414l-5.586 5.586a1 1 0 01-1.414 0L4 12.414A2 2 0 014 11V6z" />
+                </svg>
+                <span class="md:hidden"
+                    :class="{ 'md:block': !sidebarCollapsed }">{{ __('Template Konfigurasi') }}</span>
+                <span class="hidden" :class="{ 'md:inline': !sidebarCollapsed }">{{ __('Template Konfigurasi') }}</span>
+            </div>
+            <svg class="h-4 w-4 md:hidden" :class="{ 'md:block': !sidebarCollapsed }" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
         @php($isActive = request()->routeIs('admin.units.*'))
         <a href="{{ route('admin.units.index') }}" @click="mobileMenuOpen = false"
             :title="sidebarCollapsed ? '{{ __('Unit / Server') }}' : ''"

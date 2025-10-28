@@ -127,10 +127,34 @@ class RentalController extends Controller
     {
         $unit = Unit::findOrFail($data['unit_id']);
         $startDate = Carbon::parse($data['start_date']);
-        $endDate = $startDate->copy()->addDays(self::MAX_LOAN_DAYS);
-
         $pricePerDay = (float) ($unit->price_per_day ?? 0);
-        $totalCost = max(round($pricePerDay * self::MAX_LOAN_DAYS, 2), 0);
+
+        $existingStart = null;
+        $existingEnd = null;
+
+        if ($rental) {
+            $existingStart = $rental->start_date ? Carbon::parse($rental->start_date) : null;
+            $existingEnd = $rental->end_date ? Carbon::parse($rental->end_date) : null;
+        }
+        $existingDuration = null;
+
+        if ($existingStart && $existingEnd) {
+            $existingDuration = max($existingStart->diffInDays($existingEnd), 1);
+        }
+
+        $durationDays = $existingDuration ?? self::MAX_LOAN_DAYS;
+
+        $unitChanged = $rental && $unit->getKey() !== $rental->unit_id;
+        $startChanged = $existingStart ? !$startDate->equalTo($existingStart) : false;
+        $shouldReuseExistingSchedule = $rental && !$unitChanged && !$startChanged;
+
+        if ($shouldReuseExistingSchedule && $existingEnd) {
+            $endDate = $existingEnd;
+            $totalCost = (float) $rental->total_cost;
+        } else {
+            $endDate = $startDate->copy()->addDays($durationDays);
+            $totalCost = max(round($pricePerDay * $durationDays, 2), 0);
+        }
 
         return array_merge($data, [
             'end_date' => $endDate,

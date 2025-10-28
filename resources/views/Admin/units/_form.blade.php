@@ -3,9 +3,12 @@
 @php
     $unit = $unit ?? null;
     $selectedCategories = old('categories', $selectedCategories ?? []);
+    $configurationProfiles = $configurationProfiles ?? collect();
+    $selectedConfigurationProfileId = old('configuration_profile_id', $unit->configuration_profile_id ?? '');
+    $configurationValues = old('configuration', $configurationValues ?? []);
 @endphp
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ selectedProfileId: @js((string) ($selectedConfigurationProfileId ?? '')) }">
     <div>
         <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Nama Unit') }}</label>
         <input type="text" name="name" id="name" value="{{ old('name', $unit->name ?? '') }}"
@@ -102,6 +105,112 @@
             @enderror
         </div>
     </div>
+
+    @if ($configurationProfiles->isNotEmpty())
+        <div class="space-y-4">
+            <div>
+                <label for="configuration_profile_id" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Template Konfigurasi') }}</label>
+                <select name="configuration_profile_id" id="configuration_profile_id"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                        x-model="selectedProfileId">
+                    <option value="">{{ __('Tanpa Template') }}</option>
+                    @foreach ($configurationProfiles as $profile)
+                        <option value="{{ $profile->id }}">{{ $profile->name }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Pilih template untuk memuat field konfigurasi pramuat. Biarkan kosong jika ingin mengisi manual di luar sistem.') }}</p>
+                @error('configuration_profile_id')
+                    <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
+                @enderror
+            </div>
+
+            @foreach ($configurationProfiles as $profile)
+                @php
+                    $profileIdString = (string) $profile->id;
+                @endphp
+                <div class="rounded-lg border border-dashed border-gray-300 p-4 dark:border-slate-700" x-cloak
+                     x-show="selectedProfileId === @js($profileIdString)">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $profile->name }}</h3>
+                            <span class="text-xs font-medium uppercase tracking-wide text-indigo-500">{{ __('Aktif') }}</span>
+                        </div>
+                        @if ($profile->description)
+                            <p class="text-sm text-gray-600 dark:text-gray-300">{{ $profile->description }}</p>
+                        @endif
+                    </div>
+
+                    <div class="mt-4 space-y-5">
+                        @foreach ($profile->fields as $field)
+                            @php
+                                $fieldId = 'configuration_' . $field->id;
+                                $fieldName = 'configuration[' . $field->id . ']';
+                                $fieldValue = $configurationValues[$field->id] ?? '';
+                                $fieldMeta = $field->meta ?? [];
+                            @endphp
+                            <div>
+                                <label for="{{ $fieldId }}" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    {{ $field->label }}
+                                    @if ($field->is_required)
+                                        <span class="text-rose-500">*</span>
+                                    @endif
+                                </label>
+
+                                @if ($field->type === 'textarea')
+                                    <textarea name="{{ $fieldName }}" id="{{ $fieldId }}" rows="4"
+                                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100 dark:placeholder-gray-500"
+                                              @if ($field->is_required) required @endif>{{ old('configuration.' . $field->id, $fieldValue) }}</textarea>
+                                @elseif ($field->type === 'number')
+                                    <input type="number" name="{{ $fieldName }}" id="{{ $fieldId }}"
+                                           value="{{ old('configuration.' . $field->id, $fieldValue) }}"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                                           @if ($field->is_required) required @endif>
+                                @elseif ($field->type === 'select')
+                                    @php
+                                        $options = $field->options ?? [];
+                                        $currentValue = old('configuration.' . $field->id, $fieldValue);
+                                    @endphp
+                                    <select name="{{ $fieldName }}" id="{{ $fieldId }}"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                                            @if ($field->is_required) required @endif>
+                                        <option value="">{{ __('Pilih salah satu') }}</option>
+                                        @foreach ($options as $optionKey => $optionValue)
+                                            @php
+                                                if (is_array($optionValue) && array_key_exists('value', $optionValue)) {
+                                                    $optionActualValue = (string) $optionValue['value'];
+                                                    $optionLabel = $optionValue['label'] ?? $optionActualValue;
+                                                } elseif (is_string($optionKey) && ! is_int($optionKey)) {
+                                                    $optionActualValue = (string) $optionKey;
+                                                    $optionLabel = (string) $optionValue;
+                                                } else {
+                                                    $optionActualValue = (string) $optionValue;
+                                                    $optionLabel = (string) $optionValue;
+                                                }
+                                            @endphp
+                                            <option value="{{ $optionActualValue }}" @selected($currentValue === $optionActualValue)>{{ $optionLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <input type="text" name="{{ $fieldName }}" id="{{ $fieldId }}"
+                                           value="{{ old('configuration.' . $field->id, $fieldValue) }}"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                                           @if ($field->is_required) required @endif>
+                                @endif
+
+                                @if (! empty($fieldMeta['help']))
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $fieldMeta['help'] }}</p>
+                                @endif
+
+                                @error('configuration.' . $field->id)
+                                    <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
     <div class="flex items-center justify-end gap-3">
         <a href="{{ route('admin.units.index') }}"
