@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class RentalController extends Controller
@@ -115,6 +116,7 @@ class RentalController extends Controller
             'user_id' => ['required', 'exists:users,id'],
             'unit_id' => ['required', 'exists:units,id'],
             'start_date' => ['required', 'date'],
+            'status' => ['sometimes', 'nullable', Rule::in(Rental::availableStatuses())],
         ]);
     }
 
@@ -132,7 +134,7 @@ class RentalController extends Controller
 
         return array_merge($data, [
             'end_date' => $endDate,
-            'status' => $rental?->status ?? 'ongoing',
+            'status' => $data['status'] ?? $rental?->status ?? Rental::STATUS_DEFAULT,
             'total_cost' => $totalCost,
         ]);
     }

@@ -29,11 +29,12 @@
     @stack('head')
 </head>
 
-<body class="admin-layout font-sans antialiased bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<body class="admin-layout font-sans antialiased bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100"
+    x-data="{ sidebarCollapsed: false, mobileMenuOpen: false }">
     <div class="min-h-screen flex flex-col">
         @include('admin.layouts.partials.header')
 
-        <div class="flex flex-col md:flex-row flex-1">
+        <div class="flex flex-col md:flex-row flex-1 relative">
             @include('admin.layouts.partials.sidebar')
 
             <main class="flex-1 bg-slate-50 dark:bg-slate-900/40">

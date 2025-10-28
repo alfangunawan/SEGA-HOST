@@ -48,27 +48,39 @@
             @enderror
         </div>
 
-               
-     <div>
-         <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Kata Sandi') }}</label>
-            <input type="password" name="password" id="password"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
-                   {{ isset($user) ? '' : 'required' }}>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {{ isset($user) ? __('Biarkan kosong jika tidak ingin mengganti kata sandi.') : __('Minimal 8 karakter.') }}
-            </p>
-            @error('password')
+        <div>
+            <label for="balance"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Saldo (Rp)') }}</label>
+            <input type="number" name="balance" id="balance" min="0" step="0.01"
+                value="{{ old('balance', $user->balance ?? 0) }}"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                required>
+            @error('balance')
                 <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
             @enderror
         </div>
     </div>
 
-           
- <div>
-     <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Konfirmasi Kata Sandi') }}</label>
-        <input type="password" name="password_confirmation" id="password_confirmation"
-               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
-               {{ isset($user) ? '' : 'required' }}>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Kata Sandi') }}</label>
+            <input type="password" name="password" id="password"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                   {{ isset($user) ? '' : 'required' }}>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ isset($user) ? __('Biarkan kosong jika tidak ingin mengganti kata sandi.') : __('Minimal 8 karakter.') }}
+            </p>
+            @error('password')
+                <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Konfirmasi Kata Sandi') }}</label>
+            <input type="password" name="password_confirmation" id="password_confirmation"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                   {{ isset($user) ? '' : 'required' }}>
+        </div>
     </div>
  
     <div class="flex items-center justify-end gap-3">

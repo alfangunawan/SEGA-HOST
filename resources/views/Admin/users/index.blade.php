@@ -68,6 +68,8 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Peran') }}</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                            {{ __('Saldo') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                             {{ __('Dibuat') }}</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 dark:text-gray-300">
                             {{ __('Aksi') }}</th>
@@ -87,6 +89,9 @@
                                     {{ $user->role === 'admin' ? __('Admin') : __('Anggota') }}
                                 </span>
                             </td>
+                            <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                                Rp {{ number_format($user->balance, 0, ',', '.') }}
+                            </td>
                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
                                 {{ optional($user->created_at)->translatedFormat('d M Y') }}</td>
                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
@@ -105,7 +110,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-300">
+                            <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-300">
                                 {{ __('Belum ada pengguna yang terdaftar.') }}</td>
                         </tr>
                     @endforelse

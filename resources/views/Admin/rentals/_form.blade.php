@@ -47,7 +47,7 @@
             <label for="start_date"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Tanggal Mulai') }}</label>
             <input type="date" name="start_date" id="start_date"
-                value="{{ old('start_date', optional($rental)->start_date) }}"
+                value="{{ old('start_date', optional(optional($rental)->start_date)->format('Y-m-d')) }}"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
                 required>
             @error('start_date')
@@ -55,19 +55,36 @@
             @enderror
         </div>
 
-        <div
-            class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 space-y-2 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-300">
-            <p class="font-medium text-gray-700 dark:text-gray-200">{{ __('Ketentuan Peminjaman') }}</p>
-            <p>{{ __('Pinjaman berlangsung maksimal 5 hari sejak tanggal mulai. Tanggal berakhir akan dihitung otomatis.') }}
+        @if ($rental)
+            <div>
+                <label for="status"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Status Peminjaman') }}</label>
+                <select name="status" id="status"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100">
+                    @foreach (\App\Models\Rental::STATUS_LABELS as $value => $label)
+                        <option value="{{ $value }}" @selected(old('status', $rental->status) === $value)>{{ __($label) }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('status')
+                    <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
+                @enderror
+            </div>
+        @endif
+    </div>
+
+    <div
+        class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 space-y-2 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-300">
+        <p class="font-medium text-gray-700 dark:text-gray-200">{{ __('Ketentuan Peminjaman') }}</p>
+        <p>{{ __('Pinjaman berlangsung maksimal 5 hari sejak tanggal mulai. Tanggal berakhir akan dihitung otomatis.') }}
+        </p>
+        <p>{{ __('Total biaya dihitung otomatis: harga unit per hari x 5 hari.') }}</p>
+        @if(optional($rental)->unit)
+            <p class="text-gray-700 dark:text-gray-200">
+                {{ __('Perkiraan total biaya saat ini:') }}
+                <span class="font-semibold">Rp {{ number_format($rental->total_cost, 2, ',', '.') }}</span>
             </p>
-            <p>{{ __('Total biaya dihitung otomatis: harga unit per hari x 5 hari.') }}</p>
-            @if(optional($rental)->unit)
-                <p class="text-gray-700 dark:text-gray-200">
-                    {{ __('Perkiraan total biaya saat ini:') }}
-                    <span class="font-semibold">Rp {{ number_format($rental->total_cost, 2, ',', '.') }}</span>
-                </p>
-            @endif
-        </div>
+        @endif
     </div>
 
     <div class="flex items-center justify-end gap-3">

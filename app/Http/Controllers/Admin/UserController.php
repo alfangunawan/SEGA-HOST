@@ -55,6 +55,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'role' => $validated['role'],
             'password' => Hash::make($validated['password']),
+            'balance' => $validated['balance'],
         ]);
 
         return redirect()->route('admin.users.index')
@@ -85,6 +86,7 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
+            'balance' => $validated['balance'],
         ];
 
         if (!empty($validated['password'])) {
@@ -128,6 +130,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
             'role' => ['required', Rule::in(['admin', 'user'])],
             'password' => [$isUpdate ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
+            'balance' => ['required', 'numeric', 'min:0'],
         ]);
     }
 
