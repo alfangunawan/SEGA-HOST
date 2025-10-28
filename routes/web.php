@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ConfigurationProfileController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\UserController;
@@ -31,6 +32,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::resource('configurations', ConfigurationProfileController::class)->except(['show']);
     Route::resource('units', UnitController::class)->except(['show']);
     Route::resource('rentals', AdminRentalController::class)->except(['show']);
     Route::resource('users', UserController::class)->except(['show']);
