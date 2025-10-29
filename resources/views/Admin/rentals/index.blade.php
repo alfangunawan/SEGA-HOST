@@ -116,40 +116,6 @@
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-300">
                         <div class="flex items-center gap-2">
-                            @if ($rental->status === 'pending')
-                                <form action="{{ route('admin.rentals.approve', $rental) }}" method="POST"
-                                    class="inline-flex"
-                                    onsubmit="return confirm('{{ __('Setujui peminjaman ini? Status akan menjadi sedang berjalan.') }}')">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit"
-                                        class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100 hover:text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
-                                        title="{{ __('Setujui peminjaman') }}">
-                                        <span class="sr-only">{{ __('Setujui peminjaman') }}</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('admin.rentals.reject', $rental) }}" method="POST"
-                                    class="inline-flex"
-                                    onsubmit="return confirm('{{ __('Tolak peminjaman ini? Status akan menjadi dibatalkan.') }}')">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit"
-                                        class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/20"
-                                        title="{{ __('Tolak peminjaman') }}">
-                                        <span class="sr-only">{{ __('Tolak peminjaman') }}</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </form>
-                            @endif
-
                             <a href="{{ route('admin.rentals.edit', $rental) }}"
                                 class="text-indigo-600 hover:text-indigo-500 font-medium dark:text-indigo-300 dark:hover:text-indigo-200">{{ __('Edit') }}</a>
                             <form action="{{ route('admin.rentals.destroy', $rental) }}" method="POST"

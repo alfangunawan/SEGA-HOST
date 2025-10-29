@@ -42,12 +42,14 @@
                         <div class="p-3 bg-green-100 rounded-lg dark:bg-green-900/30">
                             <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7h18M5 11h14M7 15h10M9 19h6" />
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Server Aktif') }}</p>
-                            <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ __('Normal') }}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Jumlah Server') }}</p>
+                            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                {{ number_format($totalUnits) }}</p>
                         </div>
                     </div>
                 </div>
@@ -56,16 +58,17 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-slate-900 dark:border-slate-800">
                 <div class="p-6">
                     <div class="flex items-center gap-3">
-                        <div class="p-3 bg-gray-100 rounded-lg dark:bg-slate-800">
-                            <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor"
+                        <div class="p-3 bg-purple-100 rounded-lg dark:bg-purple-900/30">
+                            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    d="M8 7h13M8 12h9M8 17h5M3 7h.01M3 12h.01M3 17h.01" />
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Status Sistem') }}</p>
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">–</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Jumlah Rental') }}</p>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ number_format($totalRentals) }}
+                            </p>
                         </div>
                     </div>
                 </div>

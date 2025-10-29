@@ -31,11 +31,7 @@ class RentalController extends Controller
         // Filter by status if provided
         if ($request->filled('status')) {
             $status = $request->status;
-            if ($status === Rental::STATUS_COMPLETED) {
-                $query->whereIn('status', [Rental::STATUS_COMPLETED, Rental::STATUS_RETURNED_EARLY]);
-            } else {
-                $query->where('status', $status);
-            }
+            $query->where('status', $status);
         }
 
         $rentals = $query->paginate(10);
@@ -163,7 +159,10 @@ class RentalController extends Controller
             $rental->refresh();
         }
 
-        $rental->load('unit');
+        $rental->load([
+            'unit.configurationProfile.fields' => fn($query) => $query->orderBy('label'),
+            'unit.configurationValues.field',
+        ]);
         return view('User.rental.show', compact('rental'));
     }
 
@@ -182,16 +181,31 @@ class RentalController extends Controller
 
         try {
             DB::transaction(function () use ($rental) {
-                $rental->update(['status' => Rental::STATUS_CANCELLED]);
-                $rental->unit->update(['status' => 'available']);
-                $rental->user->increment('balance', $rental->total_cost);
+                if ($rental->previous_status) {
+                    $rental->update([
+                        'status' => $rental->previous_status,
+                        'previous_status' => null,
+                        'final_settlement' => null,
+                    ]);
+
+                    $note = $this->appendNote($rental->notes, 'Pengajuan pengembalian dibatalkan oleh penyewa.');
+                    $rental->update(['notes' => $note]);
+                } else {
+                    $rental->update([
+                        'status' => Rental::STATUS_COMPLETED,
+                        'notes' => $this->appendNote($rental->notes, 'Peminjaman dibatalkan sebelum dimulai oleh penyewa.'),
+                    ]);
+
+                    $rental->unit->update(['status' => 'available']);
+                    $rental->user->increment('balance', $rental->total_cost);
+                }
             });
 
             return redirect()->route('rentals.index')
-                ->with('success', 'Rental dibatalkan. Dana dikembalikan ke saldo.');
+                ->with('success', 'Permintaan dibatalkan.');
         } catch (\Exception $e) {
             Log::error('Rental cancellation failed: ' . $e->getMessage());
-            return back()->with('error', 'Gagal membatalkan rental.');
+            return back()->with('error', 'Gagal membatalkan permintaan.');
         }
     }
 
@@ -215,36 +229,31 @@ class RentalController extends Controller
 
         // Calculate refund (80% of unused days)
         $today = Carbon::today();
-        $totalDays = $rental->start_date->diffInDays($rental->end_date) + 1;
-        $usedDays = $rental->start_date->diffInDays($today) + 1;
+        $start = Carbon::parse($rental->start_date);
+        $end = Carbon::parse($rental->end_date);
+        $totalDays = $start->diffInDays($end) + 1;
+        $usedDays = $start->diffInDays($today) + 1;
         $unusedDays = max(0, $totalDays - $usedDays);
         $refundAmount = $unusedDays > 0 ? ($rental->unit->price_per_day * $unusedDays * 0.8) : 0;
 
         try {
             DB::transaction(function () use ($rental, $validated, $today, $refundAmount) {
+                $note = $this->appendNote($rental->notes, 'Pengajuan pengembalian lebih awal: ' . $validated['return_reason']);
+
                 $rental->update([
-                    'status' => Rental::STATUS_RETURNED_EARLY,
+                    'status' => Rental::STATUS_PENDING,
+                    'previous_status' => Rental::STATUS_ACTIVE,
                     'end_date' => $today,
-                    'notes' => 'Dikembalikan lebih awal: ' . $validated['return_reason'],
-                    'penalty_cost' => $refundAmount > 0 ? -$refundAmount : null,
+                    'notes' => $note,
+                    'final_settlement' => $refundAmount > 0 ? -$refundAmount : null,
                 ]);
-
-                $rental->unit->update(['status' => 'available']);
-
-                if ($refundAmount > 0) {
-                    $rental->user->increment('balance', $refundAmount);
-                }
             });
 
-            $message = 'Server berhasil dikembalikan!';
-            if ($refundAmount > 0) {
-                $message .= ' Refund Rp ' . number_format($refundAmount, 0, ',', '.') . ' dikreditkan ke saldo Anda.';
-            }
-
-            return redirect()->route('rentals.index')->with('success', $message);
+            $message = 'Pengajuan pengembalian telah dikirim dan menunggu persetujuan admin.';
+            return redirect()->route('rentals.show', $rental)->with('success', $message);
         } catch (\Exception $e) {
             Log::error('Early return failed: ' . $e->getMessage());
-            return back()->with('error', 'Gagal mengembalikan server.');
+            return back()->with('error', 'Gagal mengajukan pengembalian.');
         }
     }
 
@@ -268,30 +277,24 @@ class RentalController extends Controller
 
         try {
             DB::transaction(function () use ($rental, $validated) {
-                // Hitung penalty yang harus dibayar
                 $penaltyAmount = $rental->calculatePenalty();
+                $note = $this->appendNote($rental->notes, 'Pengajuan pengembalian dengan denda: ' . $validated['return_reason']);
 
-                // Update rental status dan info
                 $rental->update([
-                    'status' => Rental::STATUS_COMPLETED,
-                    'notes' => 'Dikembalikan dengan denda: ' . $validated['return_reason'],
-                    'penalty_cost' => $penaltyAmount, // Simpan penalty yang dibayar
+                    'status' => Rental::STATUS_PENDING,
+                    'previous_status' => Rental::STATUS_OVERDUE,
+                    'notes' => $note,
+                    'final_settlement' => $penaltyAmount > 0 ? $penaltyAmount : null,
                 ]);
-
-                // Kembalikan unit ke available
-                $rental->unit->update(['status' => 'available']);
-                
-                // PERBAIKAN: Potong saldo user sesuai denda
-                $rental->user->decrement('balance', $penaltyAmount);
             });
 
-            return redirect()->route('rentals.index')->with(
+            return redirect()->route('rentals.show', $rental)->with(
                 'success',
-                'Server dikembalikan! Denda Rp ' . number_format($rental->calculatePenalty(), 0, ',', '.') . ' dipotong dari saldo.'
+                'Pengajuan pengembalian dengan denda dikirim. Menunggu persetujuan admin.'
             );
         } catch (\Exception $e) {
             Log::error('Penalty return failed: ' . $e->getMessage());
-            return back()->with('error', 'Gagal mengembalikan server.');
+            return back()->with('error', 'Gagal mengajukan pengembalian.');
         }
     }
 
@@ -314,5 +317,14 @@ class RentalController extends Controller
                     Log::error('Auto-update overdue failed: ' . $e->getMessage());
                 }
             });
+    }
+
+    private function appendNote(?string $existing, string $message): string
+    {
+        if (blank($existing)) {
+            return $message;
+        }
+
+        return $existing . "\n\n" . $message;
     }
 }

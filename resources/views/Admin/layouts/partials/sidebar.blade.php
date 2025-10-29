@@ -124,6 +124,25 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
         </a>
+        @php($isActive = request()->routeIs('admin.return-requests.*'))
+        <a href="{{ route('admin.return-requests.index') }}" @click="mobileMenuOpen = false"
+            :title="sidebarCollapsed ? '{{ __('Pengembalian') }}' : ''"
+            class="flex items-center rounded-md px-3 py-2 transition border border-transparent {{ $isActive ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-500/20 dark:text-indigo-200 dark:border-indigo-500/10' : 'hover:bg-gray-100 text-gray-600 dark:hover:bg-slate-800 dark:text-gray-300' }}"
+            :class="sidebarCollapsed ? 'md:justify-center' : 'justify-between'">
+            <div class="flex items-center gap-3">
+                <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582a9 9 0 0115.356-2.584l-1.8 1.8A6.5 6.5 0 006.5 9H10V4H4zm16 16v-5h-.582a9 9 0 01-15.356 2.584l1.8-1.8A6.5 6.5 0 0017.5 15H14v5h6z" />
+                </svg>
+                <span class="md:hidden" :class="{ 'md:block': !sidebarCollapsed }">{{ __('Pengembalian') }}</span>
+                <span class="hidden" :class="{ 'md:inline': !sidebarCollapsed }">{{ __('Pengembalian') }}</span>
+            </div>
+            <svg class="h-4 w-4 md:hidden" :class="{ 'md:block': !sidebarCollapsed }" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </a>
         @php($isActive = request()->routeIs('admin.rekap.*'))
         <a href="{{ route('admin.rekap.index') }}" @click="mobileMenuOpen = false"
             :title="sidebarCollapsed ? '{{ __('Rekap') }}' : ''"

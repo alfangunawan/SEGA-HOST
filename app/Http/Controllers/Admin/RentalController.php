@@ -130,9 +130,31 @@ class RentalController extends Controller
             return back()->with('status', __('Status peminjaman sudah diperbarui sebelumnya.'));
         }
 
-        $rental->update(['status' => 'cancelled']);
+        $rental->loadMissing(['unit', 'user']);
 
-        return back()->with('status', __('Peminjaman telah ditolak dan dibatalkan.'));
+        $rental->update([
+            'status' => Rental::STATUS_COMPLETED,
+            'notes' => $this->appendNote($rental->notes, __('Peminjaman dibatalkan oleh admin.')),
+        ]);
+
+        if ($rental->relationLoaded('unit')) {
+            $rental->unit?->update(['status' => 'available']);
+        } else {
+            $rental->unit()->update(['status' => 'available']);
+        }
+
+        $rental->user?->increment('balance', $rental->total_cost);
+
+        return back()->with('status', __('Peminjaman telah dibatalkan dan dana dikembalikan.'));
+    }
+
+    private function appendNote(?string $existing, string $message): string
+    {
+        if (blank($existing)) {
+            return $message;
+        }
+
+        return $existing . "\n\n" . $message;
     }
 
     /**

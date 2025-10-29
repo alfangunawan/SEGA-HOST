@@ -73,20 +73,6 @@
         @endif
     </div>
 
-    <div
-        class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 space-y-2 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-300">
-        <p class="font-medium text-gray-700 dark:text-gray-200">{{ __('Ketentuan Peminjaman') }}</p>
-        <p>{{ __('Pinjaman berlangsung maksimal 5 hari sejak tanggal mulai. Tanggal berakhir akan dihitung otomatis.') }}
-        </p>
-        <p>{{ __('Total biaya dihitung otomatis: harga unit per hari x 5 hari.') }}</p>
-        @if(optional($rental)->unit)
-            <p class="text-gray-700 dark:text-gray-200">
-                {{ __('Perkiraan total biaya saat ini:') }}
-                <span class="font-semibold">Rp {{ number_format($rental->total_cost, 2, ',', '.') }}</span>
-            </p>
-        @endif
-    </div>
-
     <div class="flex items-center justify-end gap-3">
         <a href="{{ route('admin.rentals.index') }}"
             class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-800">{{ __('Batal') }}</a>

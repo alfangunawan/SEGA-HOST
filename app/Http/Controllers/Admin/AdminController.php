@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Rental;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminController extends Controller
@@ -17,13 +18,13 @@ class AdminController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
 
         // Get active rentals count
-        $activeRentals = Rental::where('status', 'active')->count();
+        $activeRentals = Rental::where('status', Rental::STATUS_ACTIVE)->count();
 
         // Get late rentals count
-        $lateRentals = Rental::where('status', 'overdue')->count();
+        $lateRentals = Rental::where('status', Rental::STATUS_OVERDUE)->count();
 
         // Get completed rentals today
-        $completedToday = Rental::whereIn('status', ['completed', 'returned_early'])
+        $completedToday = Rental::where('status', Rental::STATUS_COMPLETED)
             ->whereDate('updated_at', $now->toDateString())
             ->count();
 
@@ -32,8 +33,11 @@ class AdminController extends Controller
             ->sum('total_cost');
 
         // Get pending returns
-        $pendingReturns = Rental::where('status', 'active')
-            ->whereDate('end_date', '<=', $now->copy()->addDays(1)->toDateString())
+        $pendingReturns = Rental::where('status', Rental::STATUS_PENDING)
+            ->when(
+                Schema::hasColumn('rentals', 'previous_status'),
+                fn($query) => $query->whereNotNull('previous_status')
+            )
             ->count();
 
         // Get units availability
@@ -55,6 +59,7 @@ class AdminController extends Controller
             'pendingReturns' => $pendingReturns,
             'unitsAvailable' => $unitsAvailable,
             'totalUnits' => $totalUnits,
+            'totalRentals' => Rental::count(),
             'recentRentals' => $recentRentals,
         ]);
     }

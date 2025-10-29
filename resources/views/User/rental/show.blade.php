@@ -1,4 +1,9 @@
 <x-app-layout>
+    @php
+        $configurationProfile = $rental->unit->configurationProfile;
+        $configurationValues = $rental->unit->configurationValues->keyBy('configuration_field_id');
+        $hasConfiguration = $configurationProfile && $configurationProfile->fields->isNotEmpty();
+    @endphp
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
@@ -14,9 +19,9 @@
                     <form method="POST" action="{{ route('rentals.cancel', $rental) }}" class="inline">
                         @csrf @method('PATCH')
                         <button type="submit" 
-                                onclick="return confirm('Yakin ingin membatalkan?')"
+                                onclick="return confirm('Batalkan pengajuan ini?')"
                                 class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            Batalkan
+                            Batalkan Pengajuan
                         </button>
                     </form>
                 @endif
@@ -64,31 +69,40 @@
                         <!-- Server & Status Info -->
                         <div class="lg:col-span-2 space-y-6">
                             <!-- Server Header -->
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap items-center justify-between gap-4">
                                 <div>
                                     <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $rental->unit->name }}</h3>
                                     <p class="text-gray-600 dark:text-gray-400">{{ $rental->unit->code }}</p>
                                 </div>
-                                <span class="px-4 py-2 rounded-full text-sm font-semibold
-                                    @switch($rental->status)
-                                        @case('pending') bg-yellow-100 text-yellow-800 @break
-                                        @case('active') bg-green-100 text-green-800 @break
-                                        @case('completed') bg-blue-100 text-blue-800 @break
-                                        @case('returned_early') bg-purple-100 text-purple-800 @break
-                                        @case('cancelled') bg-gray-100 text-gray-800 @break
-                                        @case('overdue') bg-red-100 text-red-800 @break
-                                        @default bg-gray-100 text-gray-800
-                                    @endswitch">
-                                    @switch($rental->status)
-                                        @case('returned_early') Dikembalikan Lebih Awal @break
-                                        @case('completed') Selesai @break
-                                        @case('pending') Menunggu @break
-                                        @case('active') Aktif @break
-                                        @case('overdue') Terlambat @break
-                                        @case('cancelled') Dibatalkan @break
-                                        @default {{ ucfirst($rental->status) }}
-                                    @endswitch
-                                </span>
+                                <div class="flex flex-wrap items-center justify-end gap-3">
+                                    @if($hasConfiguration)
+                                        <button type="button" onclick="toggleConfigurationSection()"
+                                                data-config-button
+                                                aria-expanded="false"
+                                                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18M3 12h18M3 16.5h10" />
+                                            </svg>
+                                            <span data-config-button-label>Konfigurasi Server</span>
+                                        </button>
+                                    @endif
+                                    <span class="px-4 py-2 rounded-full text-sm font-semibold
+                                        @switch($rental->status)
+                                            @case('pending') bg-yellow-100 text-yellow-800 @break
+                                            @case('active') bg-green-100 text-green-800 @break
+                                            @case('completed') bg-blue-100 text-blue-800 @break
+                                            @case('overdue') bg-red-100 text-red-800 @break
+                                            @default bg-gray-100 text-gray-800
+                                        @endswitch">
+                                        @switch($rental->status)
+                                            @case('completed') Selesai @break
+                                            @case('pending') Menunggu Persetujuan @break
+                                            @case('active') Aktif @break
+                                            @case('overdue') Terlambat @break
+                                            @default {{ ucfirst($rental->status) }}
+                                        @endswitch
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Basic Info Grid -->
@@ -208,48 +222,136 @@
                                 <hr class="border-gray-300 dark:border-gray-600">
                                 
                                 <div class="flex justify-between">
-                                    <span class="font-medium">Biaya Rental</span>
+                                    <span class="font-medium">Biaya Rental <span class="text-xs text-green-600">✓</span></span>
                                     <span class="font-medium">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</span>
                                 </div>
-                                <div class="text-xs text-green-600">✓ Sudah dibayar</div>
                                 
                                 @if($dendaAmount > 0 && $rental->status === 'overdue')
-                                    <div class="flex justify-between text-red-600">
-                                        <span class="font-medium">Denda ({{ $hariTerlambat }} hari)</span>
-                                        <span class="font-medium">Rp {{ number_format($dendaAmount, 0, ',', '.') }}</span>
+                                    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm dark:border-red-800 dark:bg-red-900/20 mb-2">
+                                        <div class="flex justify-between text-red-700 dark:text-red-300">
+                                            <span class="font-medium">Denda keterlambatan ({{ $hariTerlambat }} hari)</span>
+                                            <span class="font-semibold">Rp {{ number_format($dendaAmount, 0, ',', '.') }}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">Belum terpotong dari saldo. Akan diproses ketika pengembalian disetujui.</p>
                                     </div>
-                                    <div class="text-xs text-red-500">⚠️ Belum dibayar</div>
                                 @endif
-                                
+
                                 @if($rental->penalty_cost != 0)
-                                    <div class="flex justify-between {{ $rental->penalty_cost < 0 ? 'text-green-600' : 'text-blue-600' }}">
-                                        <span class="font-medium">
-                                            {{ $rental->penalty_cost < 0 ? 'Refund' : 'Denda Dibayar' }}
-                                        </span>
-                                        <span class="font-medium">
-                                            {{ $rental->penalty_cost < 0 ? '+' : '' }}Rp {{ number_format(abs($rental->penalty_cost), 0, ',', '.') }}
-                                        </span>
-                                    </div>
-                                    <div class="text-xs {{ $rental->penalty_cost < 0 ? 'text-green-500' : 'text-blue-500' }}">
-                                        ✓ {{ $rental->penalty_cost < 0 ? 'Dikreditkan' : 'Sudah dibayar' }}
-                                    </div>
-                                @endif
-                                
-                                @if($dendaAmount > 0 && $rental->status === 'overdue')
-                                    <hr class="border-red-300">
-                                    <div class="flex justify-between font-bold text-red-600">
-                                        <span>Yang Harus Dibayar</span>
-                                        <span>Rp {{ number_format($dendaAmount, 0, ',', '.') }}</span>
+                                    <div class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800/60">
+                                        <div class="flex justify-between {{ $rental->penalty_cost < 0 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400' }}">
+                                            <span class="font-medium">
+                                                {{ $rental->penalty_cost < 0 ? 'Refund diproses' : 'Denda dibayar' }}
+                                            </span>
+                                            <span class="font-semibold">
+                                                {{ $rental->penalty_cost < 0 ? '+' : '' }}Rp {{ number_format(abs($rental->penalty_cost), 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            ✓ {{ $rental->penalty_cost < 0 ? 'Dana dikembalikan ke saldo' : 'Denda sudah dipotong dari saldo' }}
+                                        </p>
                                     </div>
                                 @endif
                             </div>
                         </div>
                     </div>
 
+                    @if($rental->status === 'pending' && $rental->previous_status)
+                        <div class="mt-6 p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/20">
+                            <h4 class="font-semibold text-yellow-900 dark:text-yellow-200">Menunggu Tindakan Admin</h4>
+                            <p class="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
+                                Permintaan pengembalian sedang diproses. Anda akan melihat pembaruan keputusan di bagian catatan di bawah ini.
+                            </p>
+                        </div>
+                    @endif
+
                     @if($rental->notes)
                         <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Catatan</h4>
                             <p class="text-gray-600 dark:text-gray-300 whitespace-pre-line">{{ $rental->notes }}</p>
+                        </div>
+                    @endif
+                    @if($hasConfiguration)
+                        <div id="configurationSection" class="mt-6 hidden">
+                            <div class="rounded-xl border border-indigo-100 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-900/20 p-5">
+                                <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Konfigurasi Server</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                            Profil: {{ $configurationProfile->name ?? 'Tanpa Nama' }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                @if($configurationProfile->description)
+                                    <p class="mb-5 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $configurationProfile->description }}
+                                    </p>
+                                @endif
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    @foreach($configurationProfile->fields as $field)
+                                        @php
+                                            $rawValue = optional($configurationValues->get($field->id))->value;
+                                            $displayValue = $rawValue ?? $field->default_value;
+                                            $displayValue = is_array($displayValue) ? implode(', ', $displayValue) : $displayValue;
+
+                                            if (is_string($displayValue)) {
+                                                $decoded = json_decode($displayValue, true);
+                                                if (json_last_error() === JSON_ERROR_NONE) {
+                                                    if (is_array($decoded)) {
+                                                        $displayValue = implode(', ', array_filter($decoded, fn ($item) => $item !== null && $item !== ''));
+                                                    } elseif (is_bool($decoded)) {
+                                                        $displayValue = $decoded ? 'Ya' : 'Tidak';
+                                                    } elseif (!is_array($decoded)) {
+                                                        $displayValue = $decoded;
+                                                    }
+                                                }
+                                            }
+
+                                            if (in_array($field->type, ['boolean', 'toggle'], true)) {
+                                                $normalized = is_string($displayValue) ? strtolower($displayValue) : $displayValue;
+                                                $truthy = ['1', 'true', 'yes', 'on', 'ya'];
+                                                $falsy = ['0', 'false', 'no', 'off', 'tidak'];
+
+                                                if (is_bool($displayValue)) {
+                                                    $boolValue = $displayValue;
+                                                } elseif (is_numeric($displayValue)) {
+                                                    $boolValue = (float) $displayValue > 0;
+                                                } elseif (is_string($normalized) && in_array($normalized, $truthy, true)) {
+                                                    $boolValue = true;
+                                                } elseif (is_string($normalized) && in_array($normalized, $falsy, true)) {
+                                                    $boolValue = false;
+                                                } else {
+                                                    $boolValue = null;
+                                                }
+
+                                                $displayValue = $boolValue === null ? $displayValue : ($boolValue ? 'Ya' : 'Tidak');
+                                            }
+
+                                            $displayValue = ($displayValue === null || $displayValue === '') ? '-' : $displayValue;
+                                        @endphp
+                                        <div class="bg-white/70 dark:bg-gray-800/70 border border-white/40 dark:border-gray-700/60 backdrop-blur-sm p-4 rounded-lg">
+                                            <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-1">
+                                                {{ $field->label }}
+                                            </div>
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white break-words">
+                                                {!! nl2br(e($displayValue)) !!}
+                                            </div>
+                                            @if($field->description ?? false)
+                                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $field->description }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                @if($configurationProfile->fields->isEmpty())
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Belum ada konfigurasi yang ditetapkan untuk server ini.
+                                    </p>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -387,6 +489,27 @@
     </div>
 
     <script>
+        function toggleConfigurationSection() {
+            const section = document.getElementById('configurationSection');
+            const button = document.querySelector('[data-config-button]');
+            const label = button ? button.querySelector('[data-config-button-label]') : null;
+            if (!section) {
+                return;
+            }
+
+            const isHidden = section.classList.toggle('hidden');
+            if (button) {
+                button.setAttribute('aria-expanded', (!isHidden).toString());
+                if (label) {
+                    label.textContent = isHidden ? 'Konfigurasi Server' : 'Sembunyikan Konfigurasi';
+                }
+            }
+
+            if (!isHidden) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
         function openEarlyReturnModal() {
             document.getElementById('earlyReturnModal').classList.remove('hidden');
         }
