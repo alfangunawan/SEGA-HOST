@@ -150,7 +150,11 @@ class Rental extends Model
         // Hitung hari terlambat setelah end_date
         if ($today->greaterThan($endDate)) {
             $daysLate = $endDate->diffInDays($today);
-            return $daysLate * 5000; // Rp 5.000 per hari terlambat
+            
+            
+            $penaltyPerDay = $this->unit->penalty ?? 5000; // Fallback ke 5000 jika null
+            
+            return $daysLate * $penaltyPerDay;
         }
         
         return 0;
