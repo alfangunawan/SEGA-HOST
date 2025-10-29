@@ -222,38 +222,33 @@
                                 <hr class="border-gray-300 dark:border-gray-600">
                                 
                                 <div class="flex justify-between">
-                                    <span class="font-medium">Biaya Rental</span>
+                                    <span class="font-medium">Biaya Rental <span class="text-xs text-green-600">✓</span></span>
                                     <span class="font-medium">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</span>
                                 </div>
-                                <div class="text-xs text-green-600">✓ Sudah dibayar</div>
                                 
                                 @if($dendaAmount > 0 && $rental->status === 'overdue')
-                                    <div class="flex justify-between text-red-600">
-                                        <span class="font-medium">Denda ({{ $hariTerlambat }} hari)</span>
-                                        <span class="font-medium">Rp {{ number_format($dendaAmount, 0, ',', '.') }}</span>
+                                    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm dark:border-red-800 dark:bg-red-900/20 mb-2">
+                                        <div class="flex justify-between text-red-700 dark:text-red-300">
+                                            <span class="font-medium">Denda keterlambatan ({{ $hariTerlambat }} hari)</span>
+                                            <span class="font-semibold">Rp {{ number_format($dendaAmount, 0, ',', '.') }}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">Belum terpotong dari saldo. Akan diproses ketika pengembalian disetujui.</p>
                                     </div>
-                                    <div class="text-xs text-red-500">⚠️ Belum dibayar</div>
                                 @endif
-                                
+
                                 @if($rental->penalty_cost != 0)
-                                    <div class="flex justify-between {{ $rental->penalty_cost < 0 ? 'text-green-600' : 'text-blue-600' }}">
-                                        <span class="font-medium">
-                                            {{ $rental->penalty_cost < 0 ? 'Refund' : 'Denda Dibayar' }}
-                                        </span>
-                                        <span class="font-medium">
-                                            {{ $rental->penalty_cost < 0 ? '+' : '' }}Rp {{ number_format(abs($rental->penalty_cost), 0, ',', '.') }}
-                                        </span>
-                                    </div>
-                                    <div class="text-xs {{ $rental->penalty_cost < 0 ? 'text-green-500' : 'text-blue-500' }}">
-                                        ✓ {{ $rental->penalty_cost < 0 ? 'Dikreditkan' : 'Sudah dibayar' }}
-                                    </div>
-                                @endif
-                                
-                                @if($dendaAmount > 0 && $rental->status === 'overdue')
-                                    <hr class="border-red-300">
-                                    <div class="flex justify-between font-bold text-red-600">
-                                        <span>Yang Harus Dibayar</span>
-                                        <span>Rp {{ number_format($dendaAmount, 0, ',', '.') }}</span>
+                                    <div class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800/60">
+                                        <div class="flex justify-between {{ $rental->penalty_cost < 0 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400' }}">
+                                            <span class="font-medium">
+                                                {{ $rental->penalty_cost < 0 ? 'Refund diproses' : 'Denda dibayar' }}
+                                            </span>
+                                            <span class="font-semibold">
+                                                {{ $rental->penalty_cost < 0 ? '+' : '' }}Rp {{ number_format(abs($rental->penalty_cost), 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            ✓ {{ $rental->penalty_cost < 0 ? 'Dana dikembalikan ke saldo' : 'Denda sudah dipotong dari saldo' }}
+                                        </p>
                                     </div>
                                 @endif
                             </div>

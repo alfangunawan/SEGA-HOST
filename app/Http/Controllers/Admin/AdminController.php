@@ -59,6 +59,7 @@ class AdminController extends Controller
             'pendingReturns' => $pendingReturns,
             'unitsAvailable' => $unitsAvailable,
             'totalUnits' => $totalUnits,
+            'totalRentals' => Rental::count(),
             'recentRentals' => $recentRentals,
         ]);
     }
