@@ -26,7 +26,7 @@
                                     </h3>
                                     <p class="mt-1 text-sm text-red-700 dark:text-red-300">
                                         You have reached the maximum limit of 2 active server rentals. To rent a new server,
-                                        please return or cancel an existing rental first.
+                                        please return an existing rental first.
                                     </p>
                                 </div>
                             </div>
@@ -127,7 +127,7 @@
                     </div>
                 </div>
 
-                <!-- Total Orders (excluding cancelled) -->
+                <!-- Total Orders -->
                 <a href="{{ route('rentals.index') }}"
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus:outline-none transition hover:shadow-lg">
                     <div class="p-6">
@@ -142,9 +142,6 @@
                             <div class="ml-4">
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                     <span>Valid Orders</span>
-                                    @if($cancelledOrders > 0)
-                                        <span class="text-xs text-gray-500">({{ $cancelledOrders }} cancelled)</span>
-                                    @endif
                                 </p>
                                 <p class="text-2xl font-semibold text-gray-900 dark:text-white">
                                     {{ $totalOrders }}
@@ -160,7 +157,7 @@
                     </div>
                 </a>
 
-                <!-- Monthly Spending (excluding cancelled) -->
+                <!-- Monthly Spending -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center">
@@ -255,10 +252,10 @@
                                             {{ $statusLabel }}
                                         </span>
                                         <span
-                                            class="text-sm font-medium text-gray-900 dark:text-white {{ $rental->status === 'cancelled' ? 'line-through text-gray-500 dark:text-gray-400' : '' }}">
+                                            class="text-sm font-medium text-gray-900 dark:text-white">
                                             Rp {{ number_format($rental->total_cost, 0, ',', '.') }}
-                                            @if($rental->status === 'cancelled')
-                                                <span class="text-xs text-red-500">(Dana dikembalikan)</span>
+                                            @if($rental->status === \App\Models\Rental::STATUS_PENDING && $rental->previous_status)
+                                                <span class="text-xs text-amber-500">(Menunggu persetujuan admin)</span>
                                             @endif
                                         </span>
                                     </div>

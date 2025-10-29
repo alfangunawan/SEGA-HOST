@@ -16,13 +16,11 @@ class Rental extends Model
     public const STATUS_PENDING = 'pending';
     public const STATUS_ACTIVE = 'active';
     public const STATUS_COMPLETED = 'completed';
-    public const STATUS_RETURNED_EARLY = 'returned_early';
     public const STATUS_OVERDUE = 'overdue';
-    public const STATUS_CANCELLED = 'cancelled';
-    
+
     // Default status
     public const STATUS_DEFAULT = self::STATUS_PENDING;
-    
+
     // Business constants
     public const MAX_RENTAL_DAYS = 5;
     public const REFUND_PERCENTAGE = 0.8;
@@ -33,9 +31,7 @@ class Rental extends Model
         self::STATUS_PENDING => 'Pending',
         self::STATUS_ACTIVE => 'Active',
         self::STATUS_COMPLETED => 'Completed',
-        self::STATUS_RETURNED_EARLY => 'Returned Early',
         self::STATUS_OVERDUE => 'Overdue',
-        self::STATUS_CANCELLED => 'Cancelled',
     ];
 
     // Status badge CSS classes
@@ -43,9 +39,7 @@ class Rental extends Model
         self::STATUS_PENDING => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-300',
         self::STATUS_ACTIVE => 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-300',
         self::STATUS_COMPLETED => 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-300',
-        self::STATUS_RETURNED_EARLY => 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-300',
         self::STATUS_OVERDUE => 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-300',
-        self::STATUS_CANCELLED => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
     ];
 
     protected $fillable = [
@@ -57,6 +51,7 @@ class Rental extends Model
         'total_cost',
         'penalty_cost',
         'notes',
+        'previous_status',
         'is_paid',
         'payment_date',
         'payment_method',
@@ -116,7 +111,7 @@ class Rental extends Model
     {
         $today = Carbon::today();
         $endDate = Carbon::parse($this->end_date);
-        
+
         return $today->greaterThan($endDate);
     }
 
@@ -131,7 +126,7 @@ class Rental extends Model
 
         $today = Carbon::today();
         $endDate = Carbon::parse($this->end_date);
-        
+
         return $endDate->diffInDays($today);
     }
 
@@ -140,19 +135,25 @@ class Rental extends Model
      */
     public function calculatePenalty(): float
     {
-        if ($this->status !== self::STATUS_ACTIVE && $this->status !== self::STATUS_OVERDUE) {
+        $statusToEvaluate = $this->status;
+
+        if ($this->status === self::STATUS_PENDING && $this->previous_status === self::STATUS_OVERDUE) {
+            $statusToEvaluate = self::STATUS_OVERDUE;
+        }
+
+        if ($statusToEvaluate !== self::STATUS_ACTIVE && $statusToEvaluate !== self::STATUS_OVERDUE) {
             return 0;
         }
 
         $today = Carbon::today();
         $endDate = Carbon::parse($this->end_date);
-        
+
         // Hitung hari terlambat setelah end_date
         if ($today->greaterThan($endDate)) {
             $daysLate = $endDate->diffInDays($today);
             return $daysLate * 5000; // Rp 5.000 per hari terlambat
         }
-        
+
         return 0;
     }
 
@@ -187,7 +188,7 @@ class Rental extends Model
      */
     public static function getCompletedStatuses(): array
     {
-        return [self::STATUS_COMPLETED, self::STATUS_RETURNED_EARLY];
+        return [self::STATUS_COMPLETED];
     }
 
     /**
@@ -195,7 +196,7 @@ class Rental extends Model
      */
     public function isCompleted(): bool
     {
-        return in_array($this->status, self::getCompletedStatuses());
+        return in_array($this->status, self::getCompletedStatuses(), true);
     }
 
     /**

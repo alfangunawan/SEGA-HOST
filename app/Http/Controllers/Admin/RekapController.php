@@ -19,7 +19,7 @@ class RekapController extends Controller
 
         $rentalsQuery = Rental::query()
             ->with(['user', 'unit'])
-            ->whereIn('status', ['completed', 'returned_early'])
+            ->where('status', 'completed')
             ->when($search, function ($query, $search) {
                 $query->where(function ($subQuery) use ($search) {
                     $subQuery->whereHas('user', fn($userQuery) => $userQuery->where('name', 'like', "%{$search}%"))

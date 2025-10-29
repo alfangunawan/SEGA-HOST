@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
+use App\Http\Controllers\Admin\RentalReturnController;
 use App\Http\Controllers\Admin\RekapController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\Product;
@@ -37,6 +38,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('rentals', AdminRentalController::class)->except(['show']);
     Route::patch('rentals/{rental}/approve', [AdminRentalController::class, 'approve'])->name('rentals.approve');
     Route::patch('rentals/{rental}/reject', [AdminRentalController::class, 'reject'])->name('rentals.reject');
+    Route::get('return-requests', [RentalReturnController::class, 'index'])->name('return-requests.index');
+    Route::patch('return-requests/{rental}/approve', [RentalReturnController::class, 'approve'])->name('return-requests.approve');
+    Route::patch('return-requests/{rental}/reject', [RentalReturnController::class, 'reject'])->name('return-requests.reject');
     Route::resource('users', UserController::class)->except(['show']);
     Route::get('rekap', [RekapController::class, 'index'])->name('rekap.index');
 });

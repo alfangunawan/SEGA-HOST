@@ -14,9 +14,9 @@
                     <form method="POST" action="{{ route('rentals.cancel', $rental) }}" class="inline">
                         @csrf @method('PATCH')
                         <button type="submit" 
-                                onclick="return confirm('Yakin ingin membatalkan?')"
+                                onclick="return confirm('Batalkan pengajuan ini?')"
                                 class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            Batalkan
+                            Batalkan Pengajuan
                         </button>
                     </form>
                 @endif
@@ -74,18 +74,14 @@
                                         @case('pending') bg-yellow-100 text-yellow-800 @break
                                         @case('active') bg-green-100 text-green-800 @break
                                         @case('completed') bg-blue-100 text-blue-800 @break
-                                        @case('returned_early') bg-purple-100 text-purple-800 @break
-                                        @case('cancelled') bg-gray-100 text-gray-800 @break
                                         @case('overdue') bg-red-100 text-red-800 @break
                                         @default bg-gray-100 text-gray-800
                                     @endswitch">
                                     @switch($rental->status)
-                                        @case('returned_early') Dikembalikan Lebih Awal @break
                                         @case('completed') Selesai @break
-                                        @case('pending') Menunggu @break
+                                        @case('pending') Menunggu Persetujuan @break
                                         @case('active') Aktif @break
                                         @case('overdue') Terlambat @break
-                                        @case('cancelled') Dibatalkan @break
                                         @default {{ ucfirst($rental->status) }}
                                     @endswitch
                                 </span>
@@ -245,6 +241,15 @@
                             </div>
                         </div>
                     </div>
+
+                    @if($rental->status === 'pending' && $rental->previous_status)
+                        <div class="mt-6 p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/20">
+                            <h4 class="font-semibold text-yellow-900 dark:text-yellow-200">Menunggu Tindakan Admin</h4>
+                            <p class="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
+                                Permintaan pengembalian sedang diproses. Anda akan melihat pembaruan keputusan di bagian catatan di bawah ini.
+                            </p>
+                        </div>
+                    @endif
 
                     @if($rental->notes)
                         <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
