@@ -108,6 +108,34 @@ class RentalController extends Controller
     }
 
     /**
+     * Approve a pending rental.
+     */
+    public function approve(Rental $rental): RedirectResponse
+    {
+        if ($rental->status !== 'pending') {
+            return back()->with('status', __('Status peminjaman sudah diperbarui sebelumnya.'));
+        }
+
+        $rental->update(['status' => 'active']);
+
+        return back()->with('status', __('Peminjaman telah disetujui dan kini sedang berjalan.'));
+    }
+
+    /**
+     * Reject a pending rental.
+     */
+    public function reject(Rental $rental): RedirectResponse
+    {
+        if ($rental->status !== 'pending') {
+            return back()->with('status', __('Status peminjaman sudah diperbarui sebelumnya.'));
+        }
+
+        $rental->update(['status' => 'cancelled']);
+
+        return back()->with('status', __('Peminjaman telah ditolak dan dibatalkan.'));
+    }
+
+    /**
      * Validate request data for creating/updating a rental.
      */
     protected function validatedData(Request $request): array

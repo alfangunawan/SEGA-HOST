@@ -17,6 +17,7 @@ class ConfigurationField extends Model
         'key',
         'type',
         'options',
+        'default_value',
         'is_required',
         'meta',
     ];
@@ -25,6 +26,7 @@ class ConfigurationField extends Model
         'options' => 'array',
         'meta' => 'array',
         'is_required' => 'boolean',
+        'default_value' => 'string',
     ];
 
     /**

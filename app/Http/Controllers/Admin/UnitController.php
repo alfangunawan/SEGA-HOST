@@ -171,17 +171,29 @@ class UnitController extends Controller
 
             foreach ($profile->fields as $field) {
                 $value = $request->input("configuration.{$field->id}");
+                $hasSubmittedValue = !in_array($value, [null, ''], true);
+                $effectiveValue = $hasSubmittedValue ? $value : $field->default_value;
 
-                if ($field->is_required && ($value === null || $value === '')) {
+                if ($field->is_required && ($effectiveValue === null || $effectiveValue === '')) {
                     $validator->errors()->add("configuration.{$field->id}", __(':label wajib diisi.', [
                         'label' => $field->label,
                     ]));
                 }
 
-                if ($field->type === 'select' && !$this->isValidOption($field, $value)) {
-                    $validator->errors()->add("configuration.{$field->id}", __('Pilihan tidak valid untuk :label.', [
+                if ($field->type === 'number' && $hasSubmittedValue && !is_numeric($value)) {
+                    $validator->errors()->add("configuration.{$field->id}", __(':label harus berupa angka / numerik.', [
                         'label' => $field->label,
                     ]));
+                }
+
+                if ($field->type === 'select') {
+                    $valueToCheck = $hasSubmittedValue ? $value : $field->default_value;
+
+                    if ($valueToCheck !== null && !$this->isValidOption($field, $valueToCheck)) {
+                        $validator->errors()->add("configuration.{$field->id}", __('Pilihan tidak valid untuk :label.', [
+                            'label' => $field->label,
+                        ]));
+                    }
                 }
             }
         });
@@ -219,6 +231,14 @@ class UnitController extends Controller
 
             if (is_array($value)) {
                 $value = json_encode($value);
+            }
+
+            if ($value === null && $field->default_value !== null) {
+                $value = $field->default_value;
+            }
+
+            if (is_string($value)) {
+                $value = $field->type === 'textarea' ? rtrim($value, "\r\n") : trim($value);
             }
 
             $unit->configurationValues()->updateOrCreate(

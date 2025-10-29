@@ -15,6 +15,7 @@
                 'type' => $field['type'] ?? 'text',
                 'is_required' => filter_var($field['is_required'] ?? false, FILTER_VALIDATE_BOOL),
                 'options_text' => $optionsText,
+                'default_value' => $field['default_value'] ?? '',
                 'help' => $field['help'] ?? '',
             ];
         });
@@ -40,6 +41,7 @@
                 'type' => $field->type,
                 'is_required' => (bool) $field->is_required,
                 'options_text' => $optionsText,
+                'default_value' => $field->default_value ?? '',
                 'help' => $field->meta['help'] ?? '',
             ];
         });
@@ -52,6 +54,7 @@
                 'type' => 'text',
                 'is_required' => true,
                 'options_text' => '',
+                'default_value' => '',
                 'help' => '',
             ],
         ]);
@@ -87,7 +90,8 @@
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100 dark:placeholder-gray-500"
                 placeholder="{{ __('Contoh: high-performance-game') }}">
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ __('Jika dikosongkan akan dibuat otomatis dari nama.') }}</p>
+                {{ __('Jika dikosongkan akan dibuat otomatis dari nama.') }}
+            </p>
             @error('slug')
                 <p class="text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
             @enderror
@@ -110,7 +114,8 @@
             <div>
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Field Konfigurasi') }}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ __('Susun field yang akan ditampilkan ketika admin memilih template ini.') }}</p>
+                    {{ __('Susun field yang akan ditampilkan ketika admin memilih template ini.') }}
+                </p>
             </div>
             <button type="button" @click="addField"
                 class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -202,6 +207,35 @@
 
                     <div class="space-y-2">
                         <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Nilai Default') }}</label>
+                        <template x-if="field.type === 'textarea'">
+                            <textarea
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                                rows="3" x-model="field.default_value" :name="`fields[${index}][default_value]`"
+                                placeholder="{{ __('Nilai awal yang akan muncul saat template dipakai') }}"></textarea>
+                        </template>
+                        <template x-if="field.type === 'number'">
+                            <input type="number"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                                x-model="field.default_value" :name="`fields[${index}][default_value]`"
+                                placeholder="{{ __('Contoh: 8') }}">
+                        </template>
+                        <template x-if="field.type !== 'textarea' && field.type !== 'number'">
+                            <input type="text"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                                x-model="field.default_value" :name="`fields[${index}][default_value]`"
+                                placeholder="{{ __('Contoh: /home/game-server') }}">
+                        </template>
+                        <template x-if="errors[`fields.${index}.default_value`]">
+                            <p class="text-sm text-rose-600" x-text="errors[`fields.${index}.default_value`]"></p>
+                        </template>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" x-show="field.type === 'select'">
+                            {{ __('Gunakan nilai persis seperti kolom "Daftar Opsi" (bagian sebelum tanda |). Kosongkan jika tidak perlu.') }}
+                        </p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label
                             class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Catatan / Bantuan') }}</label>
                         <textarea
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
@@ -216,7 +250,8 @@
 
         <div class="p-4" x-show="!fields.length">
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ __('Belum ada field. Klik "Tambah Field" untuk memulai.') }}</p>
+                {{ __('Belum ada field. Klik "Tambah Field" untuk memulai.') }}
+            </p>
         </div>
     </div>
 
@@ -249,6 +284,7 @@
                         type: 'text',
                         is_required: true,
                         options_text: '',
+                        default_value: '',
                         help: '',
                     });
                 },

@@ -135,6 +135,7 @@ class ConfigurationProfileController extends Controller
             'fields.*.key' => ['nullable', 'string', 'max:255'],
             'fields.*.type' => ['nullable', 'in:text,textarea,number,select'],
             'fields.*.options_text' => ['nullable', 'string'],
+            'fields.*.default_value' => ['nullable', 'string'],
             'fields.*.is_required' => ['nullable'],
             'fields.*.help' => ['nullable', 'string', 'max:500'],
         ]);
@@ -187,12 +188,41 @@ class ConfigurationProfileController extends Controller
                 }
             }
 
+            $defaultValue = isset($fieldData['default_value']) ? $fieldData['default_value'] : null;
+
+            if (is_string($defaultValue)) {
+                $defaultValue = $type === 'textarea' ? rtrim($defaultValue, "\r\n") : trim($defaultValue);
+            }
+
+            if ($defaultValue === '') {
+                $defaultValue = null;
+            }
+
+            if ($type === 'number' && $defaultValue !== null && !is_numeric($defaultValue)) {
+                $errors["$rowKey.default_value"] = __('Default value harus berupa angka.');
+            }
+
+            if ($type === 'select' && $defaultValue !== null) {
+                $optionValues = collect($options ?? [])->map(function ($option) {
+                    if (is_array($option) && array_key_exists('value', $option)) {
+                        return (string) $option['value'];
+                    }
+
+                    return (string) $option;
+                })->all();
+
+                if (!in_array((string) $defaultValue, $optionValues, true)) {
+                    $errors["$rowKey.default_value"] = __('Default value harus salah satu dari opsi yang tersedia.');
+                }
+            }
+
             $normalized[] = [
                 'id' => isset($fieldData['id']) ? (int) $fieldData['id'] : null,
                 'label' => $label,
                 'key' => $generatedKey,
                 'type' => $type,
                 'options' => $options,
+                'default_value' => $defaultValue,
                 'is_required' => filter_var($fieldData['is_required'] ?? false, FILTER_VALIDATE_BOOL),
                 'help' => isset($fieldData['help']) ? trim($fieldData['help']) : null,
                 'order' => $index,
@@ -215,6 +245,7 @@ class ConfigurationProfileController extends Controller
                 'key' => $fieldData['key'],
                 'type' => $fieldData['type'],
                 'options' => $fieldData['options'],
+                'default_value' => $fieldData['default_value'],
                 'is_required' => $fieldData['is_required'],
                 'meta' => [
                     'help' => $fieldData['help'],

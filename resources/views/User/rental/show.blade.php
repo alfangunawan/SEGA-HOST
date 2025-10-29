@@ -591,9 +591,108 @@
                                     <a href="#" class="block w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors text-center">
                                         Database Manager
                                     </a>
+                                    <button type="button"
+                                            id="configurationToggleButton"
+                                            class="block w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors text-center"
+                                            aria-controls="configurationSection"
+                                            aria-expanded="false"
+                                            onclick="toggleConfigurationSection()">
+                                        Konfigurasi
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    @php
+                        $unit = $rental->unit;
+                        $configurationProfile = $unit->configurationProfile;
+                        $configurationValues = $unit->configurationValues->loadMissing('field')->keyBy('configuration_field_id');
+                        $fields = collect();
+
+                        if ($configurationProfile) {
+                            $fields = $configurationProfile->fields->sortBy('label')->values();
+                        } elseif ($configurationValues->isNotEmpty()) {
+                            $fields = $configurationValues->map(function ($value) {
+                                return $value->field;
+                            })->filter()->sortBy('label')->values();
+                        }
+                    @endphp
+
+                    <!-- Konfigurasi -->
+                    <div id="configurationSection" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 hidden">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-0 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-1.14 1.938-1.14 2.238 0a1.724 1.724 0 002.573 1.066c1.013-.588 2.223.621 1.636 1.636a1.724 1.724 0 001.066 2.572c1.14.3 1.14 1.938 0 2.238a1.724 1.724 0 00-1.066 2.573c.588 1.013-.622 2.223-1.636 1.636a1.724 1.724 0 00-2.572 1.066c-.3 1.14-1.939 1.14-2.238 0a1.724 1.724 0 00-2.573-1.066c-1.013.588-2.223-.622-1.636-1.636a1.724 1.724 0 00-1.066-2.572c-1.14-.3-1.14-1.939 0-2.238a1.724 1.724 0 001.066-2.573c-.588-1.013.622-2.223 1.636-1.636.95.552 2.175.02 2.573-1.066z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Konfigurasi Server
+                            </h4>
+
+                            @if($configurationProfile)
+                                <div class="flex items-center gap-3 rounded-lg border border-indigo-200 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-2 text-sm text-indigo-700 dark:text-indigo-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div class="text-left">
+                                        <p class="font-semibold leading-tight">{{ $configurationProfile->name }}</p>
+                                        @if($configurationProfile->description)
+                                            <p class="text-xs text-indigo-500 dark:text-indigo-300 leading-tight">
+                                                {{ $configurationProfile->description }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Detail konfigurasi yang diterapkan pada server ini. Gunakan tombol Konfigurasi untuk menyembunyikan atau menampilkan bagian ini.
+                        </p>
+
+                        @if($fields->isNotEmpty())
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($fields as $field)
+                                    @php
+                                        $valueModel = $configurationValues->get($field->id);
+                                        $rawValue = $valueModel?->value;
+                                        $value = filled($rawValue) ? $rawValue : $field->default_value;
+
+                                        if (is_array($value)) {
+                                            $value = collect($value)->filter(fn ($item) => filled($item))->implode(', ');
+                                        } elseif (is_bool($value)) {
+                                            $value = $value ? 'Ya' : 'Tidak';
+                                        }
+
+                                        $hasValue = filled($value);
+                                        $helpText = $field->meta['help'] ?? null;
+                                    @endphp
+                                    <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4 space-y-2">
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                {{ $field->label }}@if($field->is_required)<span class="text-rose-500">*</span>@endif
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Key: {{ $field->key }}</p>
+                                        </div>
+
+                                        <div class="rounded-md bg-white dark:bg-gray-900/60 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-line break-words">
+                                            {{ $hasValue ? $value : 'Belum diatur' }}
+                                        </div>
+
+                                        @if($helpText)
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ $helpText }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-6 text-center text-sm text-gray-600 dark:text-gray-300">
+                                Konfigurasi belum tersedia untuk server ini.
+                            </div>
+                        @endif
                     </div>
 
                     <!-- SSH Connection Guide -->
@@ -1004,6 +1103,27 @@
         function closeOverdueReturnModal() {
             document.getElementById('overdueReturnModal').classList.add('hidden');
             document.getElementById('overdueReturnForm').reset();
+        }
+
+        function toggleConfigurationSection() {
+            const section = document.getElementById('configurationSection');
+            const trigger = document.getElementById('configurationToggleButton');
+
+            if (!section) {
+                return;
+            }
+
+            const willShow = section.classList.contains('hidden');
+
+            section.classList.toggle('hidden');
+
+            if (trigger) {
+                trigger.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+            }
+
+            if (willShow) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         function copyToClipboard(elementId) {
