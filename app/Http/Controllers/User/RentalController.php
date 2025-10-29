@@ -159,7 +159,10 @@ class RentalController extends Controller
             $rental->refresh();
         }
 
-        $rental->load('unit');
+        $rental->load([
+            'unit.configurationProfile.fields' => fn($query) => $query->orderBy('label'),
+            'unit.configurationValues.field',
+        ]);
         return view('User.rental.show', compact('rental'));
     }
 

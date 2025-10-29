@@ -1,4 +1,9 @@
 <x-app-layout>
+    @php
+        $configurationProfile = $rental->unit->configurationProfile;
+        $configurationValues = $rental->unit->configurationValues->keyBy('configuration_field_id');
+        $hasConfiguration = $configurationProfile && $configurationProfile->fields->isNotEmpty();
+    @endphp
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
@@ -64,27 +69,40 @@
                         <!-- Server & Status Info -->
                         <div class="lg:col-span-2 space-y-6">
                             <!-- Server Header -->
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap items-center justify-between gap-4">
                                 <div>
                                     <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $rental->unit->name }}</h3>
                                     <p class="text-gray-600 dark:text-gray-400">{{ $rental->unit->code }}</p>
                                 </div>
-                                <span class="px-4 py-2 rounded-full text-sm font-semibold
-                                    @switch($rental->status)
-                                        @case('pending') bg-yellow-100 text-yellow-800 @break
-                                        @case('active') bg-green-100 text-green-800 @break
-                                        @case('completed') bg-blue-100 text-blue-800 @break
-                                        @case('overdue') bg-red-100 text-red-800 @break
-                                        @default bg-gray-100 text-gray-800
-                                    @endswitch">
-                                    @switch($rental->status)
-                                        @case('completed') Selesai @break
-                                        @case('pending') Menunggu Persetujuan @break
-                                        @case('active') Aktif @break
-                                        @case('overdue') Terlambat @break
-                                        @default {{ ucfirst($rental->status) }}
-                                    @endswitch
-                                </span>
+                                <div class="flex flex-wrap items-center justify-end gap-3">
+                                    @if($hasConfiguration)
+                                        <button type="button" onclick="toggleConfigurationSection()"
+                                                data-config-button
+                                                aria-expanded="false"
+                                                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18M3 12h18M3 16.5h10" />
+                                            </svg>
+                                            <span data-config-button-label>Konfigurasi Server</span>
+                                        </button>
+                                    @endif
+                                    <span class="px-4 py-2 rounded-full text-sm font-semibold
+                                        @switch($rental->status)
+                                            @case('pending') bg-yellow-100 text-yellow-800 @break
+                                            @case('active') bg-green-100 text-green-800 @break
+                                            @case('completed') bg-blue-100 text-blue-800 @break
+                                            @case('overdue') bg-red-100 text-red-800 @break
+                                            @default bg-gray-100 text-gray-800
+                                        @endswitch">
+                                        @switch($rental->status)
+                                            @case('completed') Selesai @break
+                                            @case('pending') Menunggu Persetujuan @break
+                                            @case('active') Aktif @break
+                                            @case('overdue') Terlambat @break
+                                            @default {{ ucfirst($rental->status) }}
+                                        @endswitch
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Basic Info Grid -->
@@ -257,6 +275,90 @@
                             <p class="text-gray-600 dark:text-gray-300 whitespace-pre-line">{{ $rental->notes }}</p>
                         </div>
                     @endif
+                    @if($hasConfiguration)
+                        <div id="configurationSection" class="mt-6 hidden">
+                            <div class="rounded-xl border border-indigo-100 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-900/20 p-5">
+                                <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Konfigurasi Server</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                            Profil: {{ $configurationProfile->name ?? 'Tanpa Nama' }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                @if($configurationProfile->description)
+                                    <p class="mb-5 text-sm text-gray-600 dark:text-gray-300">
+                                        {{ $configurationProfile->description }}
+                                    </p>
+                                @endif
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    @foreach($configurationProfile->fields as $field)
+                                        @php
+                                            $rawValue = optional($configurationValues->get($field->id))->value;
+                                            $displayValue = $rawValue ?? $field->default_value;
+                                            $displayValue = is_array($displayValue) ? implode(', ', $displayValue) : $displayValue;
+
+                                            if (is_string($displayValue)) {
+                                                $decoded = json_decode($displayValue, true);
+                                                if (json_last_error() === JSON_ERROR_NONE) {
+                                                    if (is_array($decoded)) {
+                                                        $displayValue = implode(', ', array_filter($decoded, fn ($item) => $item !== null && $item !== ''));
+                                                    } elseif (is_bool($decoded)) {
+                                                        $displayValue = $decoded ? 'Ya' : 'Tidak';
+                                                    } elseif (!is_array($decoded)) {
+                                                        $displayValue = $decoded;
+                                                    }
+                                                }
+                                            }
+
+                                            if (in_array($field->type, ['boolean', 'toggle'], true)) {
+                                                $normalized = is_string($displayValue) ? strtolower($displayValue) : $displayValue;
+                                                $truthy = ['1', 'true', 'yes', 'on', 'ya'];
+                                                $falsy = ['0', 'false', 'no', 'off', 'tidak'];
+
+                                                if (is_bool($displayValue)) {
+                                                    $boolValue = $displayValue;
+                                                } elseif (is_numeric($displayValue)) {
+                                                    $boolValue = (float) $displayValue > 0;
+                                                } elseif (is_string($normalized) && in_array($normalized, $truthy, true)) {
+                                                    $boolValue = true;
+                                                } elseif (is_string($normalized) && in_array($normalized, $falsy, true)) {
+                                                    $boolValue = false;
+                                                } else {
+                                                    $boolValue = null;
+                                                }
+
+                                                $displayValue = $boolValue === null ? $displayValue : ($boolValue ? 'Ya' : 'Tidak');
+                                            }
+
+                                            $displayValue = ($displayValue === null || $displayValue === '') ? '-' : $displayValue;
+                                        @endphp
+                                        <div class="bg-white/70 dark:bg-gray-800/70 border border-white/40 dark:border-gray-700/60 backdrop-blur-sm p-4 rounded-lg">
+                                            <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300 mb-1">
+                                                {{ $field->label }}
+                                            </div>
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white break-words">
+                                                {!! nl2br(e($displayValue)) !!}
+                                            </div>
+                                            @if($field->description ?? false)
+                                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $field->description }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                @if($configurationProfile->fields->isEmpty())
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Belum ada konfigurasi yang ditetapkan untuk server ini.
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -392,6 +494,27 @@
     </div>
 
     <script>
+        function toggleConfigurationSection() {
+            const section = document.getElementById('configurationSection');
+            const button = document.querySelector('[data-config-button]');
+            const label = button ? button.querySelector('[data-config-button-label]') : null;
+            if (!section) {
+                return;
+            }
+
+            const isHidden = section.classList.toggle('hidden');
+            if (button) {
+                button.setAttribute('aria-expanded', (!isHidden).toString());
+                if (label) {
+                    label.textContent = isHidden ? 'Konfigurasi Server' : 'Sembunyikan Konfigurasi';
+                }
+            }
+
+            if (!isHidden) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
         function openEarlyReturnModal() {
             document.getElementById('earlyReturnModal').classList.remove('hidden');
         }
