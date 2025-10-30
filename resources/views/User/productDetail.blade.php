@@ -113,32 +113,6 @@
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="space-y-4">
-                                    <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center mr-4">
-                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Server Code</p>
-                                            <p class="font-semibold text-gray-900 dark:text-white">{{ $unit->code }}</p>
-                                        </div>
-                                    </div>
-
-                                    @if($unit->ip_address)
-                                        <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                                            <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg flex items-center justify-center mr-4">
-                                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0 9c5 0 9-4 9-9m-9 9c-5 0-9-4-9-9m9 9V3m0 18V3"></path>
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">IP Address</p>
-                                                <p class="font-semibold text-gray-900 dark:text-white font-mono">{{ $unit->ip_address }}</p>
-                                            </div>
-                                        </div>
-                                    @endif
-
                                     @if($unit->location)
                                         <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                                             <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center mr-4">
@@ -153,9 +127,6 @@
                                             </div>
                                         </div>
                                     @endif
-                                </div>
-
-                                <div class="space-y-4">
                                     <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                                         <div class="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center mr-4">
                                             <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,6 +138,9 @@
                                             <p class="font-semibold text-gray-900 dark:text-white">99.9% Guaranteed</p>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="space-y-4">
 
                                     <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                                         <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center mr-4">

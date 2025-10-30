@@ -14,10 +14,7 @@
                     </svg>
                 </button>
 
-                <div class="flex items-center justify-center w-10 h-10 bg-indigo-300 rounded-lg overflow-hidden">
-                    <img src="{{ asset('img/sega_host_logo.png') }}" alt="SEGA HOST Logo"
-                        class="w-full h-full object-contain p-1">
-                </div>
+                <img src="{{ asset('img/sega_logo.png') }}" alt="Sega Logo" class="w-12 h-12">
             </div>
 
             {{-- Right Section --}}
