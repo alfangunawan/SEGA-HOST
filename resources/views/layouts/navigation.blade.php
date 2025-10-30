@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        <img src="{{ asset('img/sega_logo.png') }}" alt="Sega Logo" class="w-12 h-12">
                     </a>
                 </div>
 
@@ -15,27 +15,44 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
+                        {{ __('Products') }}
+                    </x-nav-link>
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <!-- Settings & Theme Controls -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-3" x-data="themeToggle()" x-init="init()">
+                <button type="button" @click="toggle()"
+                    class="inline-flex items-center justify-center h-9 w-9 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100 transition dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-900"
+                    :aria-label="isDark ? '{{ __('Switch to light mode') }}' : '{{ __('Switch to dark mode') }}'"
+                    :title="isDark ? '{{ __('Switch to light mode') }}' : '{{ __('Switch to dark mode') }}'">
+                    <svg x-show="!isDark" x-cloak class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M6.343 6.343L4.929 4.929m12.728 12.728l-1.414-1.414M6.343 17.657l-1.414 1.414M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg x-show="isDark" x-cloak class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                        <button
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <!-- Profile Photo -->
                             @if(Auth::user()->profile_photo)
-                                <img src="{{ Auth::user()->profile_photo_url }}" 
-                                     alt="{{ Auth::user()->name }}" 
-                                     class="h-8 w-8 rounded-full object-cover mr-2">
+                                <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}"
+                                    class="h-8 w-8 rounded-full object-cover mr-2">
                             @else
-                                <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-2">
+                                <div
+                                    class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-2">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                                         {{ substr(Auth::user()->name, 0, 1) }}
                                     </span>
                                 </div>
                             @endif
-                            
+
                             <div>{{ Auth::user()->name }}</div>
 
                             <div class="ms-1">
@@ -95,6 +112,9 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
+                {{ __('Products') }}
+            </x-responsive-nav-link>
 
             @if(Auth::check() && Auth::user()->role === 'admin')
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
@@ -108,9 +128,8 @@
             <div class="px-4 flex items-center">
                 <!-- Mobile Profile Photo -->
                 @if(Auth::user()->profile_photo)
-                    <img src="{{ Auth::user()->profile_photo_url }}" 
-                         alt="{{ Auth::user()->name }}" 
-                         class="h-10 w-10 rounded-full object-cover mr-3">
+                    <img src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}"
+                        class="h-10 w-10 rounded-full object-cover mr-3">
                 @else
                     <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -118,11 +137,27 @@
                         </span>
                     </div>
                 @endif
-                
+
                 <div>
                     <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
                     <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
                 </div>
+            </div>
+
+            <div class="mt-3 px-4" x-data="themeToggle()" x-init="init()">
+                <button type="button" @click="toggle()"
+                    class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 transition dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-900"
+                    :aria-label="isDark ? '{{ __('Switch to light mode') }}' : '{{ __('Switch to dark mode') }}'">
+                    <svg x-show="!isDark" x-cloak class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M6.343 6.343L4.929 4.929m12.728 12.728l-1.414-1.414M6.343 17.657l-1.414 1.414M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg x-show="isDark" x-cloak class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <span x-text="isDark ? '{{ __('Light Mode') }}' : '{{ __('Dark Mode') }}'"></span>
+                </button>
             </div>
 
             <div class="mt-3 space-y-1">
