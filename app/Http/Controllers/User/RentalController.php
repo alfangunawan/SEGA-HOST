@@ -102,7 +102,7 @@ class RentalController extends Controller
         }
 
         try {
-            $rental = DB::transaction(function () use ($user, $unit, $startDate, $endDate, $totalCost) {
+            $rental = DB::transaction(function () use ($user, $unit, $startDate, $endDate, $totalCost, $rentalDays) {
                 // Lock resources
                 $lockedUnit = Unit::lockForUpdate()->find($unit->id);
                 $lockedUser = User::lockForUpdate()->find($user->id);
@@ -121,6 +121,7 @@ class RentalController extends Controller
                     'unit_id' => $lockedUnit->id,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
+                    'duration_days' => $rentalDays,
                     'status' => Rental::STATUS_ACTIVE, // Langsung aktif setelah pembayaran
                     'total_cost' => $totalCost,
                 ]);

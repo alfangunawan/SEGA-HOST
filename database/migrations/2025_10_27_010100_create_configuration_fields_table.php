@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('key');
             $table->string('type')->default('text');
             $table->json('options')->nullable();
+            $table->text('default_value')->nullable();
             $table->boolean('is_required')->default(true);
             $table->json('meta')->nullable();
             $table->timestamps();

@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 class RentalController extends Controller
 {
-    private const MAX_LOAN_DAYS = 5;
+    private const MAX_LOAN_DAYS = Rental::MAX_RENTAL_DAYS;
 
     /**
      * Display a listing of rentals.
@@ -49,8 +49,9 @@ class RentalController extends Controller
     {
         $users = User::orderBy('name')->pluck('name', 'id');
         $units = Unit::orderBy('name')->pluck('name', 'id');
+        $durationOptions = range(1, self::MAX_LOAN_DAYS);
 
-        return view('admin.rentals.create', compact('users', 'units'));
+        return view('admin.rentals.create', compact('users', 'units', 'durationOptions'));
     }
 
     /**
@@ -77,8 +78,9 @@ class RentalController extends Controller
 
         $users = User::orderBy('name')->pluck('name', 'id');
         $units = Unit::orderBy('name')->pluck('name', 'id');
+        $durationOptions = range(1, self::MAX_LOAN_DAYS);
 
-        return view('admin.rentals.edit', compact('rental', 'users', 'units'));
+        return view('admin.rentals.edit', compact('rental', 'users', 'units', 'durationOptions'));
     }
 
     /**
@@ -166,6 +168,7 @@ class RentalController extends Controller
             'user_id' => ['required', 'exists:users,id'],
             'unit_id' => ['required', 'exists:units,id'],
             'start_date' => ['required', 'date'],
+            'duration_days' => ['required', 'integer', 'min:1', 'max:' . self::MAX_LOAN_DAYS],
             'status' => ['sometimes', 'nullable', Rule::in(Rental::availableStatuses())],
         ]);
     }
@@ -179,35 +182,17 @@ class RentalController extends Controller
         $startDate = Carbon::parse($data['start_date']);
         $pricePerDay = (float) ($unit->price_per_day ?? 0);
 
-        $existingStart = null;
-        $existingEnd = null;
+        $durationDays = (int) ($data['duration_days'] ?? self::MAX_LOAN_DAYS);
+        $durationDays = max(1, min($durationDays, self::MAX_LOAN_DAYS));
 
-        if ($rental) {
-            $existingStart = $rental->start_date ? Carbon::parse($rental->start_date) : null;
-            $existingEnd = $rental->end_date ? Carbon::parse($rental->end_date) : null;
-        }
-        $existingDuration = null;
+        $endDate = $startDate->copy()->addDays($durationDays);
+        $totalCost = max(round($pricePerDay * $durationDays, 2), 0);
 
-        if ($existingStart && $existingEnd) {
-            $existingDuration = max($existingStart->diffInDays($existingEnd), 1);
-        }
-
-        $durationDays = $existingDuration ?? self::MAX_LOAN_DAYS;
-
-        $unitChanged = $rental && $unit->getKey() !== $rental->unit_id;
-        $startChanged = $existingStart ? !$startDate->equalTo($existingStart) : false;
-        $shouldReuseExistingSchedule = $rental && !$unitChanged && !$startChanged;
-
-        if ($shouldReuseExistingSchedule && $existingEnd) {
-            $endDate = $existingEnd;
-            $totalCost = (float) $rental->total_cost;
-        } else {
-            $endDate = $startDate->copy()->addDays($durationDays);
-            $totalCost = max(round($pricePerDay * $durationDays, 2), 0);
-        }
+        $data['duration_days'] = $durationDays;
 
         return array_merge($data, [
-            'end_date' => $endDate,
+            'start_date' => $startDate->toDateString(),
+            'end_date' => $endDate->toDateString(),
             'status' => $data['status'] ?? $rental?->status ?? Rental::STATUS_DEFAULT,
             'total_cost' => $totalCost,
         ]);

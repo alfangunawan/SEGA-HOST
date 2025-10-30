@@ -109,13 +109,6 @@
 
                                 <!-- Quick Specs -->
                                 <div class="space-y-2 mb-6">
-                                    @if($unit->ip_address)
-                                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                            <div class="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
-                                            <span class="font-medium">IP:</span>
-                                            <span class="ml-2 font-mono">{{ $unit->ip_address }}</span>
-                                        </div>
-                                    @endif
                                     @if($unit->location)
                                         <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                             <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>

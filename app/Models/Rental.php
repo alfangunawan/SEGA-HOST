@@ -47,6 +47,7 @@ class Rental extends Model
         'unit_id',
         'start_date',
         'end_date',
+        'duration_days',
         'status',
         'total_cost',
         'penalty_cost',
@@ -67,6 +68,7 @@ class Rental extends Model
         'total_cost' => 'decimal:2',
         'penalty_cost' => 'decimal:2',
         'final_settlement' => 'decimal:2',
+        'duration_days' => 'integer',
     ];
 
     /**

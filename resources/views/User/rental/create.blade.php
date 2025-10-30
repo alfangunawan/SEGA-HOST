@@ -21,11 +21,14 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-2xl">
                 <div class="p-8">
                     <!-- Server Info Header -->
-                    <div class="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <div
+                        class="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                         <div class="flex items-center mb-4">
                             <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2">
+                                    </path>
                                 </svg>
                             </div>
                             <div>
@@ -33,14 +36,8 @@
                                 <p class="text-blue-700 dark:text-blue-300">{{ $unit->code }}</p>
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-2 gap-4 text-sm">
-                            @if($unit->ip_address)
-                                <div>
-                                    <span class="text-blue-600 dark:text-blue-400 font-medium">IP Address:</span>
-                                    <span class="text-blue-800 dark:text-blue-200 font-mono ml-2">{{ $unit->ip_address }}</span>
-                                </div>
-                            @endif
                             @if($unit->location)
                                 <div>
                                     <span class="text-blue-600 dark:text-blue-400 font-medium">Location:</span>
@@ -59,7 +56,8 @@
                         <div class="space-y-6">
                             <!-- Rental Period -->
                             <div>
-                                <label for="rental_days" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <label for="rental_days"
+                                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     Periode Sewa <span class="text-red-500">*</span>
                                 </label>
                                 <select name="rental_days" id="rental_days"
@@ -69,7 +67,8 @@
                                     <option value="2" {{ old('rental_days') == 2 ? 'selected' : '' }}>2 Hari</option>
                                     <option value="3" {{ old('rental_days') == 3 ? 'selected' : '' }}>3 Hari</option>
                                     <option value="4" {{ old('rental_days') == 4 ? 'selected' : '' }}>4 Hari</option>
-                                    <option value="5" {{ old('rental_days') == 5 ? 'selected' : '' }}>5 Hari (Maksimal)</option>
+                                    <option value="5" {{ old('rental_days') == 5 ? 'selected' : '' }}>5 Hari (Maksimal)
+                                    </option>
                                 </select>
                                 @error('rental_days')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -78,7 +77,8 @@
 
                             <!-- Start Date -->
                             <div>
-                                <label for="start_date" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <label for="start_date"
+                                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     Tanggal Mulai <span class="text-red-500">*</span>
                                 </label>
                                 <input type="date" name="start_date" id="start_date"
@@ -90,12 +90,14 @@
                             </div>
 
                             <!-- Cost Summary -->
-                            <div class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="p-6 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
                                 <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Ringkasan Biaya</h4>
                                 <div class="space-y-3">
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">Harga per hari</span>
-                                        <span class="font-medium">Rp {{ number_format($unit->price_per_day, 0, ',', '.') }}</span>
+                                        <span class="font-medium">Rp
+                                            {{ number_format($unit->price_per_day, 0, ',', '.') }}</span>
                                     </div>
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">Periode sewa</span>
@@ -103,19 +105,22 @@
                                     </div>
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">Saldo tersedia</span>
-                                        <span class="font-medium text-emerald-600" id="availableBalance">Rp {{ number_format(auth()->user()->balance, 0, ',', '.') }}</span>
+                                        <span class="font-medium text-emerald-600" id="availableBalance">Rp
+                                            {{ number_format(auth()->user()->balance, 0, ',', '.') }}</span>
                                     </div>
                                     <hr class="border-gray-300 dark:border-gray-600">
                                     <div class="flex justify-between">
                                         <span class="font-semibold text-gray-900 dark:text-white">Total Biaya</span>
-                                        <span class="font-bold text-xl text-blue-600 dark:text-blue-400" id="totalCost">Rp 0</span>
+                                        <span class="font-bold text-xl text-blue-600 dark:text-blue-400"
+                                            id="totalCost">Rp 0</span>
                                     </div>
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">Saldo setelah transaksi</span>
                                         <span class="font-medium" id="balanceAfter">-</span>
                                     </div>
                                 </div>
-                                <div class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hidden" id="balanceWarning">
+                                <div class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hidden"
+                                    id="balanceWarning">
                                     <p class="text-sm text-red-700 dark:text-red-300" id="warningText"></p>
                                 </div>
                             </div>
@@ -124,8 +129,10 @@
                             <div class="flex items-start space-x-3">
                                 <input type="checkbox" name="terms_accepted" id="terms_accepted"
                                     class="mt-1 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-500">
-                                <label for="terms_accepted" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    Saya menyetujui syarat dan ketentuan sewa server termasuk kebijakan pembayaran dan denda keterlambatan
+                                <label for="terms_accepted"
+                                    class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                    Saya menyetujui syarat dan ketentuan sewa server termasuk kebijakan pembayaran dan
+                                    denda keterlambatan
                                     <span class="text-red-500">*</span>
                                 </label>
                             </div>
@@ -145,13 +152,18 @@
                     </form>
 
                     <!-- Important Notes -->
-                    <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
+                    <div
+                        class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
                         <div class="flex">
-                            <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z">
+                                </path>
                             </svg>
                             <div>
-                                <h4 class="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Penting untuk Diketahui:</h4>
+                                <h4 class="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Penting untuk
+                                    Diketahui:</h4>
                                 <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
                                     <li>• Maksimal periode sewa 5 hari per server</li>
                                     <li>• Denda Rp 5.000/hari untuk keterlambatan pengembalian</li>
@@ -188,7 +200,7 @@
 
             if (days > 0) {
                 balanceAfter.textContent = 'Rp ' + remainingBalance.toLocaleString('id-ID');
-                
+
                 if (remainingBalance < 0) {
                     balanceAfter.classList.add('text-red-600', 'dark:text-red-400');
                     balanceWarning.classList.remove('hidden');
