@@ -16,9 +16,10 @@ return new class extends Migration {
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('profile_photo')->nullable();
-        
+
             $table->string('password');
             $table->string('role')->default('user');
+            $table->decimal('balance', 12, 2)->default(0);
             $table->rememberToken();
             $table->timestamps();
         });

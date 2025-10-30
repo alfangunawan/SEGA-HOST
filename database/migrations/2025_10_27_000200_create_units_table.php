@@ -16,8 +16,13 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->enum('status', ['available', 'rented', 'maintenance'])->default('available');
             $table->decimal('price_per_day', 10, 2);
+            $table->unsignedInteger('penalty')->default(5000);
             $table->string('ip_address')->nullable();
             $table->string('location')->nullable();
+            $table->foreignId('configuration_profile_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
             $table->timestamps();
         });
     }
