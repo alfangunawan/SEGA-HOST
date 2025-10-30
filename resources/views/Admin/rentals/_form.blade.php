@@ -2,6 +2,14 @@
 
 @php
     $rental = $rental ?? null;
+    $durationOptions = $durationOptions ?? range(1, \App\Models\Rental::MAX_RENTAL_DAYS);
+    $existingDuration = null;
+
+    if ($rental && $rental->start_date && $rental->end_date) {
+        $existingDuration = max($rental->start_date->diffInDays($rental->end_date), 1);
+    }
+
+    $selectedDuration = old('duration_days', $existingDuration ?? \App\Models\Rental::MAX_RENTAL_DAYS);
 @endphp
 
 <div class="space-y-6">
@@ -42,7 +50,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
         <div>
             <label for="start_date"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Tanggal Mulai') }}</label>
@@ -51,6 +59,26 @@
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
                 required>
             @error('start_date')
+                <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="duration_days"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Durasi Sewa (hari)') }}</label>
+            <select name="duration_days" id="duration_days"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-100"
+                required>
+                @foreach ($durationOptions as $option)
+                    <option value="{{ $option }}" @selected((int) $selectedDuration === (int) $option)>
+                        {{ $option }} {{ __('hari') }}
+                    </option>
+                @endforeach
+            </select>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ __('Durasi maksimal sesuai batasan sistem adalah :max hari.', ['max' => \App\Models\Rental::MAX_RENTAL_DAYS]) }}
+            </p>
+            @error('duration_days')
                 <p class="mt-1 text-sm text-rose-600 dark:text-rose-300">{{ $message }}</p>
             @enderror
         </div>
